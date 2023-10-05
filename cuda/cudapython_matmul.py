@@ -119,8 +119,10 @@ err, = cuda.cuLaunchKernel(
 ASSERT_DRV(err)
 cuda.cuEventRecordWithFlags(end, stream, cuda.cuda.CUevent_wait_flags(0))
 cuda.cuStreamSynchronize(stream)
+_, time_event = cuda.cuEventElapsedTime(start, end)
 end_gpu = time.time()
-time_gpu = end_gpu - start_gpu
+#time_gpu = end_gpu - start_gpu
+time_gpu = time_event / 1000000.
 method_name = "GPU(shared memory padded by c func wrapped)"
 print(method_name + " time: " + str(time_gpu))
 

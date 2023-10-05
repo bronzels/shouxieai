@@ -136,7 +136,7 @@ blockspergrid_y = int(math.ceil(B.shape[1]/threadsperblock[1]))
 blockspergrid = (blockspergrid_x, blockspergrid_y, 1)
 
 #gpu_a_a = []
-for i in range(3,4,1):
+for i in range(0,3,1):
     if i == 0:
         method_name = "GPU(global memory)"
         kernel = matmul_gpu
@@ -160,7 +160,8 @@ for i in range(3,4,1):
     print(method_name + " time: " + str(time_gpu))
 
     print("Compare CPU with " + method_name)
-    compare_matrixes(C_gpu, C_cpu)
+    #compare_matrixes(C_gpu, C_cpu)
+    assert numpy.allclose(C_gpu, C_cpu, atol=1e-3, rtol=1e-3)
     #gpu_a_a.append(C_gpu)
     if printa:
         print("C_gpu[:2,:10]:\n", C_gpu[:2, :10])
