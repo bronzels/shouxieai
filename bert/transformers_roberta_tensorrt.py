@@ -14,7 +14,7 @@ import time
 from tqdm import tqdm
 
 from text_cls_common import GenDataSet, valtrans, label_dict, valtrans_onnx, softmax
-from text_cls_common import save_model_path, max_length, num_classes, batch_size, dynamic_onnx_model_path
+from text_cls_common import save_model_path, max_length, num_classes, batch_size, onnx_model_path
 from trt_common import get_engine, allocate_buffers, do_inference_v2
 
 test_file = 'dataset/test/real/usual_test_labeled.txt'
@@ -219,26 +219,30 @@ if __name__ == '__main__':
     device = torch.device("cuda:{}".format(device_no) if torch.cuda.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained(save_model_path)
     dataset = GenDataSet(tokenizer, {"test": test_file}, label_dict, max_length, batch_size)
-    test_data_tensor = dataset.get_test_data()
-    dynamic_onnx_model_file_trans = dynamic_onnx_model_path + "/trans/robert-wma.onnx"
-    dynamic_onnx_model_file_trans = dynamic_onnx_model_path + "/trans/model.onnx"
+    #test_data_tensor = dataset.get_test_data()
+    dynamic_onnx_model_file_trans = onnx_model_path + "/trans/robert-wma.onnx"
+    dynamic_onnx_model_file_trans = onnx_model_path + "/trans/model.onnx"
     #trans2onnx(save_model_path, dynamic_onnx_model_file_trans)
-    dynamic_onnx_model_file_torch = dynamic_onnx_model_path + "/torch/robert-wma.onnx"
-    torch2onnx(device, save_model_path, dynamic_onnx_model_file_torch, batch_size)
+    dynamic_onnx_model_file_torch = onnx_model_path + "/torch/robert-wma.onnx"
+    dynamic_onnx_model_file_optimum = onnx_model_path + "/optimum/model.onnx"
+    #torch2onnx(device, save_model_path, dynamic_onnx_model_file_torch, batch_size)
     #torch2onnx(device, save_model_path, dynamic_onnx_model_file_torch)
-    acc, infertime = torch_infer(device, save_model_path, test_data_tensor)
-    print('%s acc:%.4f, cost: %.4fs' % ('torch_infer', acc, infertime))
+    #acc, infertime = torch_infer(device, save_model_path, test_data_tensor)
+    #print('%s acc:%.4f, cost: %.4fs' % ('torch_infer', acc, infertime))
     test_data_numpy = dataset.get_test_data(False)
-    acc, infertime = onnx_infer(device_no, dynamic_onnx_model_file_torch, test_data_numpy)
-    print('%s acc:%.4f, cost: %.4fs' % ('onnx_infer of onnx exported by torch total', acc, infertime))
+    #acc, infertime = onnx_infer(device_no, dynamic_onnx_model_file_torch, test_data_numpy)
+    #print('%s acc:%.4f, cost: %.4fs' % ('onnx_infer of onnx exported by torch total', acc, infertime))
     #acc, infertime = onnx_infer(device_no, dynamic_onnx_model_file_trans, test_data_numpy)
     #print('%s acc:%.4f, cost: %.4fs' % ('onnx_infer of onnx exported by trans total', acc, infertime))
+    acc, infertime = onnx_infer(device_no, dynamic_onnx_model_file_optimum, test_data_numpy)
+    print('%s acc:%.4f, cost: %.4fs' % ('onnx_infer of onnx exported by optimum total', acc, infertime))
     #trt_engine_file = 'trt/bert_trans.trt'
     #trt_engine_file = 'trt/bert_trans_fp16.trt'
-    trt_engine_file = 'trt/bert_torch.trt'
+    #trt_engine_file = 'trt/bert_torch.trt'
+    trt_engine_file = 'trt/bert_optimum.trt'
     #trt_engine_file = 'trt/bert_torch_fp16.trt'
-    #acc, infertime = trt_infer(device, trt_engine_file, test_data_numpy)
-    #print('%s acc:%.4f, cost: %.4fs' % ('trt_infer of onnx exported by trans total', acc, infertime))
+    acc, infertime = trt_infer(device, trt_engine_file, test_data_numpy)
+    print('%s acc:%.4f, cost: %.4fs' % ('trt_infer of onnx exported by optimum total', acc, infertime))
 
 """
 torch_infer acc:0.7834, cost: 0.1435s
@@ -267,6 +271,9 @@ trt_infer of onnx exported by trans total acc:0.2974, cost: 10.6741s #把allocat
   context.set_binding_shape(1, (origin_inputshape))
 /data0/shouxieai/bert/transformers_roberta_tensorrt.py:180: DeprecationWarning: Use set_input_shape instead.
   context.set_binding_shape(2, (origin_inputshape))
+ 
+onnx_infer of onnx exported by optimum total acc:0.7780, cost: 23.9878s 
+trt_infer of onnx exported by optimum total acc:0.3264, cost: 10.6585s
 """
 
 """

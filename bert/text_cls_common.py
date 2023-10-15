@@ -25,7 +25,7 @@ num_classes = 6
 #batch_size = 32
 #batch_size = 32
 batch_size = 100
-dynamic_onnx_model_path = './onnx'
+onnx_model_path = './onnx'
 
 import random
 

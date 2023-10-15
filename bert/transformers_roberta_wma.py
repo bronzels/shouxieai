@@ -3,6 +3,7 @@ import time
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
 from tqdm import tqdm
 
 from text_cls_common import GenDataSet, valtrans, label_dict
