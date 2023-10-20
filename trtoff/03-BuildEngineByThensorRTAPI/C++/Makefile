@@ -11,7 +11,8 @@ TARGET_EXE  = main.exe
 all: $(TARGET_EXE)
 
 main.exe: main.o cnpy.o calibrator.o
-	$(NVCC) $(LDFLAG) -G -g -lz -o $@ $+
+	$(NVCC) $(LDFLAG) -lz -o $@ $+
+#	$(NVCC) $(LDFLAG) -G -g -lz -o $@ $+
 
 %.o: %.cpp
 	$(NVCC) $(CCFLAG) $(INCLUDE) -M -MT $@ -o $(@:.o=.d) $<

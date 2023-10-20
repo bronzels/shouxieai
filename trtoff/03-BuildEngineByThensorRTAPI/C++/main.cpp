@@ -27,14 +27,15 @@ const int         nWidth {28};
 const std::string paraFile {"../para.npz"};
 const std::string trtFile {"./model.plan"};
 const std::string dataFile {"./data.npz"};
-static Logger     gLogger(ILogger::Severity::kERROR);
+//static Logger     gLogger(ILogger::Severity::kERROR);
+static Logger     gLogger(ILogger::Severity::kINFO);
 
 // for FP16 mode
-//const bool bFP16Mode {false};
-const bool bFP16Mode {true};
+const bool bFP16Mode {false};
+//const bool bFP16Mode {true};
 // for INT8 mode
-const bool        bINT8Mode {false};
-//const bool        bINT8Mode {true};
+//const bool        bINT8Mode {false};
+const bool        bINT8Mode {true};
 const int         nCalibration {1};
 const std::string cacheFile {"./int8.cache"};
 const std::string calibrationDataFile = std::string("./data.npz");
