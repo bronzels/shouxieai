@@ -34,8 +34,9 @@ inference_output = results.as_numpy("output__0")
 print(inference_output[:5])
 
 """
-#def rn50_preprocess(img_path="dog.jpg"):
 python client.py 
+
+#def rn50_preprocess(img_path="dog.jpg"):
 [b'13.639860:249:MALAMUTE' b'11.641809:248:ESKIMO DOG'
  b'10.979411:250:SIBERIAN HUSKY' b'10.769635:537:DOGSLED'
  b'7.329067:444:BICYCLE-BUILT-FOR-TWO']
