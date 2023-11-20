@@ -1,4 +1,4 @@
-name: "tensorflow_resnet50"
+name: "resnet50_tensorflow"
 platform: "tensorflow_savedmodel"
 max_batch_size : 0
 input [

@@ -23,7 +23,7 @@ output = httpclient.InferRequestedOutput(
 )
 
 # Querying the server
-results = triton_client.infer(model_name="tensorflow_resnet50", inputs=[inputs], outputs=[output])
+results = triton_client.infer(model_name="resnet50_tensorflow", inputs=[inputs], outputs=[output])
 
 predictions = results.as_numpy("predictions")
 print(predictions[:5])

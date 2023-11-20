@@ -11,8 +11,8 @@ nerdctl run -it --net=host --rm -v ${PWD}:/models nvcr.io/nvidia/tritonserver:22
   pip install tensorflow==2.8.0
   pip install tensorflow-probability==0.16.0
 nerdctl commit `nerdctl ps -a | grep tritonserver:22.04-py3-sdk | awk '{print $1}'` tritonserver:22.04-py3-sdk-tchtf
-nerdctl stop `nerdctl ps -a | grep tritonserver:22.04-py3-sdk | awk '{print $1}'`
-nerdctl rm `nerdctl ps -a | grep tritonserver:22.04-py3-sdk | awk '{print $1}'`
+nerdctl stop `nerdctl ps -a | grep tritonserver:22.04-py3 | awk '{print $1}'`
+nerdctl rm `nerdctl ps -a | grep tritonserver:22.04-py3 | awk '{print $1}'`
 
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:22.04-py3-sdk | awk '{print $1}'` /bin/bash
 

@@ -29,7 +29,7 @@ outputs = httpclient.InferRequestedOutput(
 )
 
 # Querying the server
-results = client.infer(model_name="pytorch_resnet50", inputs=[inputs], outputs=[outputs])
+results = client.infer(model_name="resnet50_pytorch", inputs=[inputs], outputs=[outputs])
 inference_output = results.as_numpy("output__0")
 print(inference_output[:5])
 
