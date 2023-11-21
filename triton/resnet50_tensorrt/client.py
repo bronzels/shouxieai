@@ -1,3 +1,12 @@
+"""
+python export_onnx.py
+
+trtexec --onnx=resnet50.onnx \
+        --saveEngine=1/model.plan \
+        --explicitBatch \
+        --useCudaGraph
+
+"""
 import numpy as np
 import tritonclient.http as httpclient
 from PIL import Image
@@ -23,40 +32,41 @@ transformed_img = rn50_preprocess()
 
 client = httpclient.InferenceServerClient(url="localhost:8000")
 
-inputs = httpclient.InferInput("input__0", transformed_img.shape, datatype="FP32")
+inputs = httpclient.InferInput("input", transformed_img.shape, datatype="FP32")
 inputs.set_data_from_numpy(transformed_img, binary_data=True)
 
 outputs = httpclient.InferRequestedOutput(
-    "output__0", binary_data=True, class_count=1000
+    "output", binary_data=True, class_count=1000
 )
 
 # Querying the server
 a = time.time()
-results = client.infer(model_name="resnet50_pytorch", inputs=[inputs], outputs=[outputs])
+results = client.infer(model_name="resnet50_tensorrt", inputs=[inputs], outputs=[outputs])
 b = time.time()
 print("infer time = %f" % (b - a))
-inference_output = results.as_numpy("output__0")
+inference_output = results.as_numpy("output")
 print(inference_output[:5])
 
 """
 python client.py 
-infer time = 0.016423
-infer time = 0.009704
-infer time = 0.009046
-infer time = 0.009671
-infer time = 0.009671
+
 #def rn50_preprocess(img_path="dog.jpg"):
-[b'13.639860:249:MALAMUTE' b'11.641809:248:ESKIMO DOG'
- b'10.979411:250:SIBERIAN HUSKY' b'10.769635:537:DOGSLED'
- b'7.329067:444:BICYCLE-BUILT-FOR-TWO']
+infer time = 0.026027
+infer time = 0.007675
+infer time = 0.008319
+infer time = 0.007597
+infer time = 0.007527
+[b'13.638241:249:MALAMUTE' b'11.640631:248:ESKIMO DOG'
+ b'10.978890:250:SIBERIAN HUSKY' b'10.771481:537:DOGSLED'
+ b'7.328541:444:BICYCLE-BUILT-FOR-TWO']
 
 #def rn50_preprocess(img_path="header-gulf-birds.jpg"):
-infer time = 0.089917
-infer time = 3.075020
-infer time = 0.009896
-infer time = 0.009726
-infer time = 0.009763
-[b'12.471457:90:LORIKEET' b'11.527175:92:BEE EATER'
- b'9.658646:14:INDIGO FINCH' b'8.408511:136:EUROPEAN GALLINULE'
- b'8.217762:11:GOLDFINCH']
+infer time = 0.441362
+infer time = 0.031217
+infer time = 0.010098
+infer time = 0.007665
+infer time = 0.007915
+[b'12.474083:90:LORIKEET' b'11.525603:92:BEE EATER'
+ b'9.661272:14:INDIGO FINCH' b'8.406118:136:EUROPEAN GALLINULE'
+ b'8.219951:11:GOLDFINCH']
 """
