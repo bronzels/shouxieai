@@ -1,12 +1,8 @@
 """
 python export_onnx.py
 mkdir 1
-trtexec --onnx=resnet50.onnx \
-        --saveEngine=1/model.plan \
-        --minShapes=input:1x3x224x224 \
-        --optShapes=input:8x3x224x224 \
-        --maxShapes=input:32x3x224x224 \
-        --useCudaGraph
+mo --input_model model.onnx \
+        --output_dir=1/
 
 """
 import numpy as np
@@ -18,8 +14,7 @@ from tritonclient.utils import triton_to_np_dtype
 import time
 
 #def rn50_preprocess(img_path="dog.jpg"):
-#def rn50_preprocess(img_path="header-gulf-birds.jpg"):
-def rn50_preprocess(img_path="horse.jpg"):
+def rn50_preprocess(img_path="header-gulf-birds.jpg"):
     img = Image.open(img_path)
     preprocess = transforms.Compose(
         [
@@ -29,7 +24,7 @@ def rn50_preprocess(img_path="horse.jpg"):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-    return preprocess(img).numpy()[np.newaxis, :]
+    return preprocess(img).numpy()
 
 transformed_img = rn50_preprocess()
 
@@ -44,33 +39,33 @@ outputs = httpclient.InferRequestedOutput(
 
 # Querying the server
 a = time.time()
-results = client.infer(model_name="resnet50_tensorrt", inputs=[inputs], outputs=[outputs])
+results = client.infer(model_name="resnet50_openvino", inputs=[inputs], outputs=[outputs])
 b = time.time()
 print("infer time = %f" % (b - a))
-inference_output = results.as_numpy("output").squeeze()
-print("inference_output.shape:", inference_output.shape)
+inference_output = results.as_numpy("output")
 print(inference_output[:5])
 
 """
 python client.py 
 
 #def rn50_preprocess(img_path="dog.jpg"):
-infer time = 0.026027
-infer time = 0.007675
-infer time = 0.008319
-infer time = 0.007597
-infer time = 0.007527
-[b'13.638241:249:MALAMUTE' b'11.640631:248:ESKIMO DOG'
- b'10.978890:250:SIBERIAN HUSKY' b'10.771481:537:DOGSLED'
- b'7.328541:444:BICYCLE-BUILT-FOR-TWO']
+infer time = 0.036798
+infer time = 0.028980
+infer time = 0.028849
+infer time = 0.030025
+infer time = 0.029002
+[b'13.639914:249:MALAMUTE' b'11.641984:248:ESKIMO DOG'
+ b'10.980786:250:SIBERIAN HUSKY' b'10.771177:537:DOGSLED'
+ b'7.328811:444:BICYCLE-BUILT-FOR-TWO']
 
 #def rn50_preprocess(img_path="header-gulf-birds.jpg"):
-infer time = 0.441362
-infer time = 0.031217
-infer time = 0.010098
-infer time = 0.007665
-infer time = 0.007915
-[b'12.474083:90:LORIKEET' b'11.525603:92:BEE EATER'
- b'9.661272:14:INDIGO FINCH' b'8.406118:136:EUROPEAN GALLINULE'
- b'8.219951:11:GOLDFINCH']
+infer time = 0.029533
+infer time = 0.031004
+infer time = 0.029168
+infer time = 0.029412
+infer time = 0.029462
+[b'12.474465:90:LORIKEET' b'11.525705:92:BEE EATER'
+ b'9.660505:14:INDIGO FINCH' b'8.406350:136:EUROPEAN GALLINULE'
+ b'8.220250:11:GOLDFINCH']
+
 """

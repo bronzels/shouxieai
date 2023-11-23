@@ -8,9 +8,8 @@ x = torch.randn(1, 3, 224, 224, requires_grad=True)
 
 torch.onnx.export(model,
                   x,
-                  "resnet50.onnx",
+                  "model.onnx",
                   export_params=True,
-                  input_names=['input'],
-                  output_names=['output'],
-                  dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+                  input_names = ['input'],
+                  output_names = ['output'],
                   )

@@ -18,13 +18,13 @@ output: [
 ]
 instance_group [
     {
-        kind: KIND_GPU
+        kind: KIND_CPU
     }
 ]
 optimization {
   execution_accelerators {
-    gpu_execution_accelerator : [ {
-      name : "tensorrt"
+    cpu_execution_accelerator : [{
+      name : "openvino"
     }]
   }
 }
