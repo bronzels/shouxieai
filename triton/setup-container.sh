@@ -44,6 +44,7 @@ nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | 
 nerdctl run -it --net=host --rm -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
   cd /models
 
+nerdctl stop `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
 nerdctl restart `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
 nerdctl logs -f `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
 

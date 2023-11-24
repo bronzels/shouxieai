@@ -1,0 +1,58 @@
+name: "model2_python"
+backend: "python"
+max_batch_size: 8
+
+input [
+  {
+    name: "model_2_input_string"
+    data_type: TYPE_STRING
+    dims: [-1]
+  },
+  {
+    name: "model_2_input_UINT8_array"
+    data_type: TYPE_UINT8
+    dims: [-1]
+  },
+  {
+    name: "model_2_input_INT8_array"
+    data_type: TYPE_INT8
+    dims: [-1]
+  },
+  {
+    name: "model_2_input_FP32_image"
+    data_type: TYPE_FP32
+    dims: [-1, -1, -1]
+  },
+  {
+    name: "model_2_input_bool"
+    data_type: TYPE_BOOL
+    dims: [-1]
+  }
+]
+output [
+  {
+    name: "model_2_output_string"
+    data_type: TYPE_STRING
+    dims: [-1]
+  },
+  {
+    name: "model_2_output_UINT8_array"
+    data_type: TYPE_UINT8
+    dims: [-1]
+  },
+  {
+    name: "model_2_output_INT8_array"
+    data_type: TYPE_INT8
+    dims: [-1]
+  },
+  {
+    name: "model_2_output_FP32_image"
+    data_type: TYPE_FP32
+    dims: [-1, -1, -1]
+  },
+  {
+    name: "model_2_output_bool"
+    data_type: TYPE_BOOL
+    dims: [-1]
+  }
+]
