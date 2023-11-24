@@ -20,3 +20,6 @@ instance_group [
         gpus: [ 0 ]
     }
 ]
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+}

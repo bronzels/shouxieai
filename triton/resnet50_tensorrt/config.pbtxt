@@ -17,3 +17,17 @@ output [
     label_filename: "labels.txt"
   }
 ]
+model_warmup [
+  {
+    batch_size: 32
+    name: "warmup_requests"
+    inputs {
+      key: "input"
+      value: {
+        random_data: true
+        dims: [ 3, 224, 224 ]
+        data_type: TYPE_FP32
+      }
+    }
+  }
+]

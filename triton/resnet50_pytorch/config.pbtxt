@@ -18,3 +18,14 @@ output [
     label_filename: "labels.txt"
   }
 ]
+instance_group [
+    {
+        count: 2
+        kind: KIND_CPU
+    },
+    {
+        count: 2
+        kind: KIND_GPU
+        gpus: [ 0 ]
+    }
+]

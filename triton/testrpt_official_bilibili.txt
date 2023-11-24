@@ -1,0 +1,1202 @@
+--1,max_batch_size
+---config.pbtxt
+    max_batch_size : 4
+---resnet50_tensorrt
+---image_client.py
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -a /data/pics
+Request 1, batch size 4
+    9.538013 (817) = SPORTS CAR
+    11.358579 (283) = PERSIAN CAT
+    15.628892 (263) = PEMBROKE
+    14.287535 (268) = MEXICAN HAIRLESS
+Request 2, batch size 4
+    12.517859 (782) = SCREEN
+    11.378448 (665) = MOPED
+    9.538013 (817) = SPORTS CAR
+    11.358579 (283) = PERSIAN CAT
+PASS
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 5 -a /data/pics
+Traceback (most recent call last):
+  File "image_client.py", line 461, in <module>
+    responses.append(async_request.get_result())
+  File "/usr/local/lib/python3.8/dist-packages/tritonclient/http/__init__.py", line 1704, in get_result
+    _raise_if_error(response)
+  File "/usr/local/lib/python3.8/dist-packages/tritonclient/http/__init__.py", line 65, in _raise_if_error
+    raise error
+tritonclient.utils.InferenceServerException: [request id: 1] inference request batch-size must be <= 4 for 'resnet50_tensorrt'
+
+--2, no config.pbtxt for tensorrt, tensorflow saved-model, onnx
+---删除这3个测试repo的config.pbtxt
+---重新运行tritonserver
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --strict-model-config=false
+---triton-server logs
+I1123 10:27:00.107282 1 server.cc:633]
++---------------------+---------+--------+
+| Model               | Version | Status |
++---------------------+---------+--------+
+| densenet_onnx       | 1       | READY  |
+| resnet50_openvino   | 1       | READY  |
+| resnet50_pytorch    | 1       | READY  |
+| resnet50_tensorflow | 1       | READY  |
+| resnet50_tensorrt   | 2       | READY  |
++---------------------+---------+--------+
+---python client.py
+densenet_onnx# python client.py
+infer time = 0.645391
+['11.548369:92' '11.232046:14' '7.529403:95' '6.922669:17' '6.575726:88']
+resnet50_tensorflow# python client.py
+[b'0.301670:90' b'0.169537:14' b'0.161221:92' b'0.093231:94'
+ b'0.058601:136']
+resnet50_tensorrt# python client.py
+[b'14.287535:268' b'12.702162:171' b'10.440039:172' b'10.169583:246'
+ b'8.789397:178']
+
+--3,version_policy
+---triton-server logs
+I1123 09:36:45.517608 1 server.cc:633]
++---------------------+---------+--------+
+| Model               | Version | Status |
++---------------------+---------+--------+
+| densenet_onnx       | 1       | READY  |
+| resnet50_openvino   | 1       | READY  |
+| resnet50_pytorch    | 1       | READY  |
+| resnet50_tensorflow | 1       | READY  |
+| resnet50_tensorrt   | 1       | READY  |
+| resnet50_tensorrt   | 2       | READY  |
++---------------------+---------+--------+
+---config.pbtxt
+    version_policy: { all {} }
+---image_client.py
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 1 -a /data/pics
+......
+PASS
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 2 -a /data/pics
+......
+PASS
+---config.pbtxt
+version_policy: { latest { num_versions: 1 } }
+---image_client.py
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 1 -a /data/pics
+failed to retrieve the metadata: Request for unknown model: 'resnet50_tensorrt' version 1 is not found
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 2 -a /data/pics
+......
+PASS
+---config.pbtxt
+version_policy: { specific { versions: 1 } }
+---image_client.py
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 1 -a /data/pics
+......
+PASS
+    python image_client.py -m resnet50_tensorrt -c 1000 -b 4 -x 2 -a /data/pics
+failed to retrieve the metadata: Request for unknown model: 'resnet50_tensorrt' version 2 is not found
+
+--4,instance_group
+---重新运行tritonserver
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode explicit
+很快运行成功，因为没有加载model
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_pytorch/unload
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_pytorch/load
+perf_analyzer -m resnet50_pytorch -b 1 --concurrency-range 64 --max-threads 32 -u localhost:8001 -i gRPC
+---config.pbtxt
+instance_group [
+    {
+        count: 1
+        kind: KIND_CPU
+    }
+]
+---perf_analyzer
+Concurrency: 64, throughput: 24.7759 infer/sec, latency 2612377 usec
+---config.pbtxt
+instance_group [
+    {
+        count: 2
+        kind: KIND_CPU
+    }
+]
+---perf_analyzer
+Concurrency: 64, throughput: 36.7597 infer/sec, latency 1740105 usec
+---config.pbtxt
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+    }
+]
+---perf_analyzer
+Concurrency: 64, throughput: 320.482 infer/sec, latency 199713 usec
+---config.pbtxt
+instance_group [
+    {
+        count: 2
+        kind: KIND_GPU
+        gpus: [ 0 ]
+    }
+]
+---perf_analyzer
+Concurrency: 64, throughput: 467.676 infer/sec, latency 136296 usec
+---config.pbtxt
+instance_group [
+    {
+        count: 2
+        kind: KIND_CPU
+    }
+    {
+        count: 2
+        kind: KIND_GPU
+        gpus: [ 0 ]
+    }
+]
+---perf_analyzer
+Concurrency: 64, throughput: 228.701 infer/sec, latency 277389 usec
+
+--5,minimal backend
+--- backend loaded
+不能用load方式会报错
+curl -X POST http://localhost:8000/v2/repository/models/nonbatching_minimal/load
+curl -X POST http://localhost:8000/v2/repository/models/batching_minimal/load
+{"error":"load failed for model 'nonbatching_minimal': at least one version must be available under the version policy of model 'nonbatching_minimal'\n"}
+{"error":"load failed for model 'nonbatching_minimal': version 1 is at UNAVAILABLE state: Internal: GPU instances not supported;\n"}
+用启动就加载的模式
+nerdctl stop `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models
+I1124 02:08:36.186682 1 server.cc:633]
++---------------------+---------+--------+
+| Model               | Version | Status |
++---------------------+---------+--------+
+| batching_minimal    | 1       | READY  |
+| densenet_onnx       | 1       | READY  |
+| nonbatching_minimal | 1       | READY  |
+| resnet50_openvino   | 1       | READY  |
+| resnet50_pytorch    | 1       | READY  |
+| resnet50_tensorflow | 1       | READY  |
+| resnet50_tensorrt   | 2       | READY  |
++---------------------+---------+--------+
+---minimal client tested
+python minimal_client.py
+=========
+Sending request to nonbatching model: IN0 = [1 2 3 4]
+Response: {'model_name': 'nonbatching_minimal', 'model_version': '1', 'outputs': [{'name': 'OUT0', 'datatype': 'INT32', 'shape': [4], 'parameters': {'binary_data_size': 16}}]}
+OUT0 = [1 2 3 4]
+
+=========
+Sending request to batching model: IN0 = [[10 11 12 13]]
+Sending request to batching model: IN0 = [[20 21 22 23]]
+Response: {'model_name': 'batching_minimal', 'model_version': '1', 'outputs': [{'name': 'OUT0', 'datatype': 'INT32', 'shape': [1, 4], 'parameters': {'binary_data_size': 16}}]}
+OUT0 = [[10 11 12 13]]
+Response: {'model_name': 'batching_minimal', 'model_version': '1', 'outputs': [{'name': 'OUT0', 'datatype': 'INT32', 'shape': [1, 4], 'parameters': {'binary_data_size': 16}}]}
+OUT0 = [[20 21 22 23]]
+
+--6,scheduler
+---print batch size in python model
+python resnet50_python/client.py
+---tritonserver logs
+Batch Size:1
+python image_client.py -m resnet50_python -c 1000 -b 4 -a /data/pics
+---tritonserver logs
+Batch Size:4
+Batch Size:4
+python image_client.py -m resnet50_python -c 1000 -b 6 -a /data/pics
+---tritonserver logs
+Batch Size:6
+---change dynamic_batching and reload the model
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_python/unload
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_python/load
+---config.pbtxt
+empty
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 16
+Concurrency: 16, throughput: 274.98 infer/sec, latency 58191 usec
+---tritonserver logs
+Batch Size:1
+......
+Batch Size:1
+---config.pbtxt
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+}
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 16
+Concurrency: 16, throughput: 268.424 infer/sec, latency 59613 usec
+---tritonserver logs
+Batch Size:1
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:2
+Batch Size:8
+Batch Size:4
+Batch Size:2
+Batch Size:4
+Batch Size:4
+Batch Size:4
+Batch Size:4
+......
+Batch Size:4
+Batch Size:4
+Batch Size:4
+Batch Size:4
+---config.pbtxt
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+  max_queue_delay_microseconds: 100
+}
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 16
+Concurrency: 16, throughput: 271.694 infer/sec, latency 58842 usec
+---tritonserver logs
+Batch Size:2
+Batch Size:14
+Batch Size:2
+Batch Size:14
+Batch Size:2
+Batch Size:14
+Batch Size:2
+Batch Size:14
+Batch Size:2
+Batch Size:12
+Batch Size:4
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:6
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:11
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:11
+Batch Size:5
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:4
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:11
+Batch Size:5
+Batch Size:11
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:5
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:8
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:9
+Batch Size:7
+Batch Size:8
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:7
+Batch Size:7
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:8
+Batch Size:8
+Batch Size:7
+Batch Size:7
+Batch Size:8
+Batch Size:8
+Batch Size:5
+Batch Size:11
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:12
+Batch Size:4
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+Batch Size:10
+Batch Size:6
+---config.pbtxt
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+  max_queue_delay_microseconds: 100
+}
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 2
+Concurrency: 2, throughput: 280.758 infer/sec, latency 7123 usec
+---tritonserver logs
+Batch Size:1
+......
+Batch Size:1
+---config.pbtxt
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+  max_queue_delay_microseconds: 100
+}
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 2
+Concurrency: 2, throughput: 280.758 infer/sec, latency 7123 usec
+---tritonserver logs
+Batch Size:1
+......
+Batch Size:1
+---config.pbtxt
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+  max_queue_delay_microseconds: 200000
+}
+---perf_analyzer
+perf_analyzer -m resnet50_python -v -i gRPC -u localhost:8001 -b 1 --max-threads 32 --concurrency-range 2
+Concurrency: 2, throughput: 268.095 infer/sec, latency 7459 usec
+---tritonserver logs
+Batch Size:2
+......
+Batch Size:2
+
+---7,warmup
+---change warmup and reload the model with verbose output
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode explicit --log-verbose 1
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_tensorrt/unload
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_tensorrt/load
+---tritonserver logs
+I1124 07:20:33.946198 1 backend_model_instance.cc:765] Starting backend thread for resnet50_tensorrt at nice 0 on device 0...
+I1124 07:20:33.946233 1 backend_model_instance.cc:604] model 'resnet50_tensorrt' instance resnet50_tensorrt is running warmup sample 'warmup_requests' for iteration 1
+I1124 07:20:33.946253 1 tensorrt.cc:318] model resnet50_tensorrt, instance resnet50_tensorrt, executing 32 requests
+I1124 07:20:33.946258 1 instance_state.cc:366] TRITONBACKEND_ModelExecute: Issuing resnet50_tensorrt with 32 requests
+I1124 07:20:33.946262 1 instance_state.cc:425] TRITONBACKEND_ModelExecute: Running resnet50_tensorrt with 32 requests
+I1124 07:20:33.946280 1 instance_state.cc:1449] Optimization profile default [0] is selected for resnet50_tensorrt
+I1124 07:20:33.946326 1 pinned_memory_manager.cc:161] pinned memory allocation: size 19267584, addr 0x7f48d00930a0
+I1124 07:20:33.948012 1 instance_state.cc:909] Context with profile default [0] is being executed for resnet50_tensorrt
+---config.pbtxt
+empty
+---python client.py
+infer time = 0.028919
+infer time = 0.009587
+infer time = 0.009403
+infer time = 0.009567
+infer time = 0.009593
+---config.pbtxt
+model_warmup [
+  {
+    batch_size: 64
+    name: "warmup_requests"
+    inputs {
+      key: "input"
+      value: {
+        random_data: true
+        dims: [ 3, 224, 224 ]
+        data_type: TYPE_FP32
+      }
+    }
+  }
+]
+---python client.py
+infer time = 0.026053
+infer time = 0.009494
+infer time = 0.009609
+infer time = 0.031482
+infer time = 0.009469
+---check heath immediately after load, load http seems like sync, always 200 OK
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode explicit --log-verbose 1 --strict-readiness=true
+curl -X POST http://localhost:8000/v2/repository/models/resnet50_tensorrt/load
+curl -v http://localhost:8000/v2/health/ready
+

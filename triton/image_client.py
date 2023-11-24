@@ -160,8 +160,8 @@ def postprocess(results, output_name, batch_size, supports_batching):
     for results in output_array:
         if not supports_batching:
             results = [results]
-        print("results:", results[:5])
-        for result in results[:5]:
+        #print("results:", results[:5])
+        for result in results[:1]:
             if output_array.dtype.type == np.object_:
                 cls = "".join(chr(x) for x in result).split(":")
             else:

@@ -25,10 +25,17 @@ class TritonPythonModel:
         self.device = f"{device}:{device_id}"
         self.model = models.resnet50(pretrained=True).to(self.device).eval()
 
+    #/root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth
     def execute(self, requests):
         responses = []
+        print("Batch Size Is:{}".format(len(requests)), flush=True)
         for request in requests:
             input_tensor = pb_utils.get_input_tensor_by_name(request, "INPUT")
+            #print("Batch Size:", input_tensor)
+            #print(input_tensor.Dims()[0], flush=True)
+            #print(dir(input_tensor), flush=True)
+            #print(dir(input_tensor.shape), flush=True)
+            #print("Dim0 Size:{}".format(input_tensor.shape()[0]), flush=True)
             with torch.no_grad():
                 result = self.model(
                     torch.as_tensor(input_tensor.as_numpy(), device=self.device)
