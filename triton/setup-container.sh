@@ -13,17 +13,25 @@ cmake . -DTRITON_COMMON_REPO_TAG=r22.11 -DTRITON_CORE_REPO_TAG=r22.11 -DTRITON_B
 make
 
 nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models nvcr.io/nvidia/tritonserver:${triton_version}-py3 tritonserver --model-repository=/models
+wget -c https://github.com/triton-inference-server/server/releases/download/v2.27.0/v2.27.0_ubuntu2004.clients.tar.gz
+mkdir ../client-v2.27.0
+cd ../client-v2.27.0
+tar xzvf ../v2.27.0_ubuntu2004.clients.tar.gz
+cd -
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep "8000->8000" | awk '{print $1}'` /bin/bash
   cd /models
   pip install torch-1.12.0+cu116-cp38-cp38-linux_x86_64.whl
   pip install torchvision-0.13.0+cu116-cp38-cp38-linux_x86_64.whl
-nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` mkdir /opt/tritonserver/backends/minimal
+  pip install tritonclient[all]
+  cd /client/python
+  pip3 install --upgrade tritonclient-2.27.0-py3-none-manylinux1_x86_64.whl[all]
+nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | grep 8000 | awk '{print $1}'` mkdir /opt/tritonserver/backends/minimal
 nerdctl cp /data0/backend/examples/backends/minimal/libtriton_minimal.so `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'`:/opt/tritonserver/backends/minimal
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` ls /opt/tritonserver/backends/minimal
 nerdctl commit `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep "8000->8000" | awk '{print $1}'` tritonserver:${triton_version}-py3-tchtf
 nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models
 
-nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` /bin/bash
+nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | grep 8000 | awk '{print $1}'` /bin/bash
 
 wget -c https://s3.jcloud.sjtu.edu.cn/899a892efef34b1b944a19981040f55b-oss01/pytorch-wheels/cu116/torch-1.12.0+cu116-cp38-cp38-linux_x86_64.whl
 wget -c https://mirror.sjtu.edu.cn/pytorch-wheels/cu116/torchvision-0.13.0+cu116-cp38-cp38-linux_x86_64.whl

@@ -16,6 +16,8 @@ if sys.version_info >= (3, 0):
 else:
     import Queue as queue
 
+import time
+
 class UserData:
     def __init__(self):
         self._completed_requests = queue.Queue()
@@ -179,7 +181,8 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, FLAGS):
     inputs = [client.InferInput(input_name, batched_image_data.shape, dtype)]
     inputs[0].set_data_from_numpy(batched_image_data)
 
-    outputs = [client.InferRequestedOutput(output_name, binary_data=True, class_count=FLAGS.classes)]
+    #outputs = [client.InferRequestedOutput(output_name, binary_data=True, class_count=FLAGS.classes)]
+    outputs = [client.InferRequestedOutput(output_name, class_count=FLAGS.classes)]
 
     yield inputs, outputs, FLAGS.model_name, FLAGS.model_version
 
@@ -377,6 +380,7 @@ if __name__ == "__main__":
     if FLAGS.streaming:
         triton_client.start_stream(partial(completion_callback, user_data))
 
+    a = time.time()
     while not last_request:
         input_filenames = []
         repeated_image_data = []
@@ -467,64 +471,91 @@ if __name__ == "__main__":
             this_id = response.get_response()["id"]
         print("Request {}, batch size {}".format(this_id, FLAGS.batch_size))
         postprocess(response, output_name, FLAGS.batch_size, supports_batching)
+    b = time.time()
+    print("infer time = %f" % (b - a))
 
     print("PASS")
 
 
 """
-python image_client.py -m resnet50_tensorrt -c 1000 -b 1 -a /data/pics
-
+python image_client.py -m resnet50_tensorrt -c 1000 -b 1 /data/pics
 Request 1, batch size 1
-results: [b'9.538013:817:SPORTS CAR' b'8.804251:472:CANOE' b'8.075558:693:PADDLE'
- b'7.006228:784:SCREWDRIVER' b'6.800783:491:CHAIN SAW']
     9.538013 (817) = SPORTS CAR
-    8.804251 (472) = CANOE
-    8.075558 (693) = PADDLE
-    7.006228 (784) = SCREWDRIVER
-    6.800783 (491) = CHAIN SAW
 Request 2, batch size 1
-results: [b'11.358579:283:PERSIAN CAT' b'8.364025:285:EGYPTIAN CAT'
- b'7.451519:287:LYNX' b'7.384201:680:NIPPLE' b'7.206888:516:CRADLE']
     11.358579 (283) = PERSIAN CAT
-    8.364025 (285) = EGYPTIAN CAT
-    7.451519 (287) = LYNX
-    7.384201 (680) = NIPPLE
-    7.206888 (516) = CRADLE
 Request 3, batch size 1
-results: [b'15.628892:263:PEMBROKE' b'14.217402:264:CARDIGAN' b'9.194303:273:DINGO'
- b'8.251241:248:ESKIMO DOG' b'7.936438:250:SIBERIAN HUSKY']
     15.628892 (263) = PEMBROKE
-    14.217402 (264) = CARDIGAN
-    9.194303 (273) = DINGO
-    8.251241 (248) = ESKIMO DOG
-    7.936438 (250) = SIBERIAN HUSKY
 Request 4, batch size 1
-results: [b'14.287535:268:MEXICAN HAIRLESS' b'12.702162:171:ITALIAN GREYHOUND'
- b'10.440039:172:WHIPPET' b'10.169583:246:GREAT DANE'
- b'8.789397:178:WEIMARANER']
     14.287535 (268) = MEXICAN HAIRLESS
-    12.702162 (171) = ITALIAN GREYHOUND
-    10.440039 (172) = WHIPPET
-    10.169583 (246) = GREAT DANE
-    8.789397 (178) = WEIMARANER
 Request 5, batch size 1
-results: [b'12.517859:782:SCREEN' b'12.397985:681:NOTEBOOK'
- b'12.286010:527:DESKTOP COMPUTER' b'11.568190:620:LAPTOP'
- b'11.345040:810:SPACE BAR']
     12.517859 (782) = SCREEN
-    12.397985 (681) = NOTEBOOK
-    12.286010 (527) = DESKTOP COMPUTER
-    11.568190 (620) = LAPTOP
-    11.345040 (810) = SPACE BAR
 Request 6, batch size 1
-results: [b'11.378448:665:MOPED' b'9.996135:670:MOTOR SCOOTER'
- b'7.088654:556:FIRE SCREEN' b'6.908283:860:TOBACCO SHOP'
- b'6.690044:856:THRESHER']
     11.378448 (665) = MOPED
-    9.996135 (670) = MOTOR SCOOTER
-    7.088654 (556) = FIRE SCREEN
-    6.908283 (860) = TOBACCO SHOP
-    6.690044 (856) = THRESHER
+infer time = 0.068466
+PASS
+
+python image_client.py -m resnet50_tensorrt -c 1000 -b 1 -a /data/pics
+Request 1, batch size 1
+    9.538013 (817) = SPORTS CAR
+Request 2, batch size 1
+    11.358579 (283) = PERSIAN CAT
+Request 3, batch size 1
+    15.628892 (263) = PEMBROKE
+Request 4, batch size 1
+    14.287535 (268) = MEXICAN HAIRLESS
+Request 5, batch size 1
+    12.517859 (782) = SCREEN
+Request 6, batch size 1
+    11.378448 (665) = MOPED
+infer time = 0.075686
+PASS
+
+python image_client.py -m resnet50_tensorrt -c 1000 -b 1 -u localhost:8001 -i gRPC /data/pics
+Request 1, batch size 1
+    9.538013 (817) = SPORTS CAR
+Request 2, batch size 1
+    11.358579 (283) = PERSIAN CAT
+Request 3, batch size 1
+    15.628892 (263) = PEMBROKE
+Request 4, batch size 1
+    14.287535 (268) = MEXICAN HAIRLESS
+Request 5, batch size 1
+    12.517859 (782) = SCREEN
+Request 6, batch size 1
+    11.378448 (665) = MOPED
+infer time = 0.042891
+PASS
+
+python image_client.py -m resnet50_tensorrt -c 1000 -b 1 -a -u localhost:8001 -i gRPC /data/pics
+Request 1, batch size 1
+    9.538013 (817) = SPORTS CAR
+Request 2, batch size 1
+    11.358579 (283) = PERSIAN CAT
+Request 3, batch size 1
+    15.628892 (263) = PEMBROKE
+Request 4, batch size 1
+    14.287535 (268) = MEXICAN HAIRLESS
+Request 5, batch size 1
+    12.517859 (782) = SCREEN
+Request 6, batch size 1
+    11.378448 (665) = MOPED
+infer time = 0.021659
+PASS
+
+python image_client.py -m resnet50_tensorrt -c 1000 -b 1 --streaming -u localhost:8001 -i gRPC /data/pics
+Request 1, batch size 1
+    9.538013 (817) = SPORTS CAR
+Request 2, batch size 1
+    11.358579 (283) = PERSIAN CAT
+Request 3, batch size 1
+    15.628892 (263) = PEMBROKE
+Request 4, batch size 1
+    14.287535 (268) = MEXICAN HAIRLESS
+Request 5, batch size 1
+    12.517859 (782) = SCREEN
+Request 6, batch size 1
+    11.378448 (665) = MOPED
+infer time = 0.035652
 PASS
 
 """
