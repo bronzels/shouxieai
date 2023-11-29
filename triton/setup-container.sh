@@ -1,3 +1,14 @@
+
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+
+yum install -y nvidia-container-toolkit
+nvidia-ctk runtime configure --runtime=containerd
+systemctl restart containerd
+nerdctl run --rm --runtime=nvidia-container-runtime --gpus all nvidia/cuda:11.6.2-base-ubuntu20.04 nvidia-smi
+
+wget -c https://developer.download.nvidia.com/compute/redist/nvidia-dali-cuda110/nvidia_dali_cuda110-1.31.0-10168358-py3-none-manylinux2014_x86_64.whl
+
 #triton_version=22.04
 triton_version=22.11
 echo "export triton_version=${triton_version}" >> ~/.bashrc
@@ -35,7 +46,7 @@ nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf 
 
 wget -c https://s3.jcloud.sjtu.edu.cn/899a892efef34b1b944a19981040f55b-oss01/pytorch-wheels/cu116/torch-1.12.0+cu116-cp38-cp38-linux_x86_64.whl
 wget -c https://mirror.sjtu.edu.cn/pytorch-wheels/cu116/torchvision-0.13.0+cu116-cp38-cp38-linux_x86_64.whl
-nerdctl run -it --net=host --rm -v ${PWD}:/models nvcr.io/nvidia/tritonserver:${triton_version}-py3-sdk /bin/bash
+nerdctl run -it --net=host --rm -v /usr/local/cuda:/usr/local/cuda -v ${PWD}:/models nvcr.io/nvidia/tritonserver:${triton_version}-py3-sdk /bin/bash
   cd /models
   pip install torch-1.12.0+cu116-cp38-cp38-linux_x86_64.whl
   pip install torchvision-0.13.0+cu116-cp38-cp38-linux_x86_64.whl
@@ -43,13 +54,17 @@ nerdctl run -it --net=host --rm -v ${PWD}:/models nvcr.io/nvidia/tritonserver:${
   pip install tensorflow-probability==0.16.0
   pip install validators==0.22.0
   pip install openvino-dev==2022.1.0
+  pip install nvidia-ml-py
+  pip install nvidia-pyindex
+  pip install nvidia_dali_cuda110-1.31.0-10168358-py3-none-manylinux2014_x86_64.whl
 nerdctl commit `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'` tritonserver:${triton_version}-py3-sdk-tchtf
-nerdctl stop `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | awk '{print $1}'`
-nerdctl rm `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | awk '{print $1}'`
+nerdctl stop `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'`
+nerdctl rm `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'`
 
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'` /bin/bash
 
-nerdctl run -it --net=host --rm -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
+#nerdctl run -it --net=host --rm -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
+nerdctl run --runtime=nvidia-container-runtime -it --net=host --rm -v /usr/local/cuda:/usr/local/cuda -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
   cd /models
 
 nerdctl stop `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
