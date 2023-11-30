@@ -18,7 +18,7 @@ if __name__ == "__main__":
         "--model_name",
         type=str,
         required=False,
-        default="resnet50_python",
+        default="resnet50_pythontorch",
         help="Model name",
     )
     parser.add_argument(
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
 
 """
-python client.py
+python resnet50_python_client.py --model_name resnet50_pythontorch 
 
 #CPU
 #hub方式
@@ -140,5 +140,32 @@ infer time = 0.009720
 Results is class: TABBY
 infer time = 0.019853
 Results is class: TABBY
+
+python resnet50_python_client.py --model_name resnet50_pythononnx 
+Using cache found in /root/.cache/torch/hub/NVIDIA_DeepLearningExamples_torchhub
+infer time = 0.064156
+infer time = 0.042597
+infer time = 0.045927
+infer time = 0.027242
+infer time = 0.067491
+Results is class: TABBY
+PASS: ResNet50 instance kind
+
+#tensors sent to Python backend forced to GPU directly by config parameters FORCE_CPU_ONLY_INPUT_TENSORS
+tritonserver测的打印都是在cpu上，这个配置应该是在ensemble时前一个model的输出在gpu上才有效，在resnet50_ensemble中测试
+
+
+python resnet50_python_client.py --model_name resnet50_pythontorch 
+Using cache found in /root/.cache/torch/hub/NVIDIA_DeepLearningExamples_torchhub
+infer time = 0.031531
+infer time = 0.028127
+infer time = 0.013262
+infer time = 0.011163
+infer time = 0.009625
+Results is class: TABBY
+PASS: ResNet50 instance kind
+
+#tensors sent to Python backend forced to GPU directly by config parameters FORCE_CPU_ONLY_INPUT_TENSORS
+tritonserver测的打印都是在cpu上，这个配置应该是在ensemble时前一个model的输出在gpu上才有效，在resnet50_ensemble中测试
 
 """

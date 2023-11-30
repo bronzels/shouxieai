@@ -1,0 +1,26 @@
+name: "resnet50_pythontorch"
+backend: "python"
+max_batch_size: 128
+input {
+    name: "INPUT"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 224, 224 ]
+  }
+output {
+    name: "OUTPUT"
+    data_type: TYPE_FP32
+    dims: [ 1000 ]
+    label_filename: "labels.txt"
+  }
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [ 0 ]
+    }
+]
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+}
+parameters: { key: "FORCE_CPU_ONLY_INPUT_TENSORS" value: {string_value:"no"}}

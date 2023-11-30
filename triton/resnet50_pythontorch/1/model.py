@@ -31,15 +31,25 @@ class TritonPythonModel:
         print("Batch Size Is:{}".format(len(requests)), flush=True)
         for request in requests:
             input_tensor = pb_utils.get_input_tensor_by_name(request, "INPUT")
+            input_tensor_is_cpu = input_tensor.is_cpu()
+            print('input_tensor.is_cpu():{}'.format(str(input_tensor_is_cpu)), flush=True)
             #print("Batch Size:", input_tensor)
             #print(input_tensor.Dims()[0], flush=True)
+            #print("input_tensor:", input_tensor)
             #print(dir(input_tensor), flush=True)
+            #print("input_tensor.to_dlpack():", input_tensor.to_dlpack())
+            #print(dir(input_tensor.to_dlpack()), flush=True)
             #print(dir(input_tensor.shape), flush=True)
             #print("Dim0 Size:{}".format(input_tensor.shape()[0]), flush=True)
             with torch.no_grad():
-                result = self.model(
-                    torch.as_tensor(input_tensor.as_numpy(), device=self.device)
-                )
+                if input_tensor_is_cpu:
+                    result = self.model(
+                        torch.as_tensor(input_tensor.as_numpy(), device=self.device)
+                    )
+                else:
+                    result = self.model(
+                        torch.from_dlpack(input_tensor.to_dlpack())
+                    )
             out_tensor = pb_utils.Tensor.from_dlpack("OUTPUT", to_dlpack(result))
             responses.append(pb_utils.InferenceResponse([out_tensor]))
         return responses

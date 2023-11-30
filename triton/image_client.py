@@ -478,6 +478,7 @@ if __name__ == "__main__":
 
 
 """
+python image_client.py -m resnet50_pythononnx -c 1000 -b 1 /data/pics
 python image_client.py -m resnet50_tensorrt -c 1000 -b 1 /data/pics
 Request 1, batch size 1
     9.538013 (817) = SPORTS CAR

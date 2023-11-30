@@ -36,11 +36,17 @@ nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep
   pip install tritonclient[all]
   cd /client/python
   pip3 install --upgrade tritonclient-2.27.0-py3-none-manylinux1_x86_64.whl[all]
+  pip install onnxruntime==1.13.1
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | grep 8000 | awk '{print $1}'` mkdir /opt/tritonserver/backends/minimal
 nerdctl cp /data0/backend/examples/backends/minimal/libtriton_minimal.so `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'`:/opt/tritonserver/backends/minimal
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` ls /opt/tritonserver/backends/minimal
 nerdctl commit `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep "8000->8000" | awk '{print $1}'` tritonserver:${triton_version}-py3-tchtf
 nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models
+
+#--strict-model-config=false
+#--model-control-mode poll
+#--model-control-mode explicit
+#--exit-on-error=false
 
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | grep 8000 | awk '{print $1}'` /bin/bash
 
@@ -72,6 +78,8 @@ nerdctl restart `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf"
 nerdctl logs -f `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
 
 nerdctl start `nerdctl ps -a | grep "tritonserver:${triton_version}-py3" | awk '{print $1}'`
+
+nerdctl rm `nerdctl ps -a | grep Exited | awk '{print $1}'`
 
 """
 tensorflow要求的numpy版本高，openvino的版本低，有冲突

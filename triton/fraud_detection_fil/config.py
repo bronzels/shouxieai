@@ -1,3 +1,6 @@
+"""
+启动tritonserver必须加上--exit-on-error=false，因为本文件所在目录不是models目录
+"""
 import cupy as cp
 import os
 import pickle

@@ -1,4 +1,4 @@
-name: "resnet50_python"
+name: "resnet50_pythononnx"
 backend: "python"
 max_batch_size: 128
 input {
@@ -13,13 +13,4 @@ output {
     dims: [ 1000 ]
     label_filename: "labels.txt"
   }
-instance_group [
-    {
-        count: 1
-        kind: KIND_GPU
-        gpus: [ 0 ]
-    }
-]
-dynamic_batching {
-  preferred_batch_size: [ 2, 4, 8, 16 ]
-}
+parameters: { key: "FORCE_CPU_ONLY_INPUT_TENSORS" value: {string_value:"no"}}
