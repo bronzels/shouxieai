@@ -1,11 +1,21 @@
-name: "simple_python"
+name: "bls_sync_python"
 backend: "python"
+
+input [
+  {
+    name: "MODEL_NAME"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
 input [
   {
     name: "INPUT0"
     data_type: TYPE_FP32
     dims: [ 4 ]
-  },
+  }
+]
+input [
   {
     name: "INPUT1"
     data_type: TYPE_FP32
@@ -17,17 +27,14 @@ output [
     name: "OUTPUT0"
     data_type: TYPE_FP32
     dims: [ 4 ]
-  },
+  }
+]
+output [
   {
     name: "OUTPUT1"
     data_type: TYPE_FP32
     dims: [ 4 ]
   }
 ]
-instance_group [
-    {
-        count: 1
-        kind: KIND_CPU
-    }
-]
 
+instance_group [{ kind: KIND_CPU }]

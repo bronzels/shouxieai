@@ -1,6 +1,6 @@
 import os
 
-REPO_PATH = os.path.abspath('../')
+REPO_PATH = os.path.abspath('../triton')
 
 def get_model_dir(model_name):
     model_dir = os.path.join(REPO_PATH, model_name)

@@ -37,6 +37,10 @@ nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep
   cd /client/python
   pip3 install --upgrade tritonclient-2.27.0-py3-none-manylinux1_x86_64.whl[all]
   pip install onnxruntime==1.13.1
+  pip install transformers ftfy scipy
+  pip install transformers[all]
+  pip install diffusers==0.9.0
+  pip install tqdm
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | grep 8000 | awk '{print $1}'` mkdir /opt/tritonserver/backends/minimal
 nerdctl cp /data0/backend/examples/backends/minimal/libtriton_minimal.so `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'`:/opt/tritonserver/backends/minimal
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` ls /opt/tritonserver/backends/minimal
@@ -63,6 +67,10 @@ nerdctl run -it --net=host --rm -v /usr/local/cuda:/usr/local/cuda -v ${PWD}:/mo
   pip install nvidia-ml-py
   pip install nvidia-pyindex
   pip install nvidia_dali_cuda110-1.31.0-10168358-py3-none-manylinux2014_x86_64.whl
+  pip install transformers ftfy scipy
+  pip install transformers[all]
+  pip install diffusers==0.9.0
+  pip install tqdm
 nerdctl commit `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'` tritonserver:${triton_version}-py3-sdk-tchtf
 nerdctl stop `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'`
 nerdctl rm `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'`
@@ -80,6 +88,10 @@ nerdctl logs -f `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf"
 nerdctl start `nerdctl ps -a | grep "tritonserver:${triton_version}-py3" | awk '{print $1}'`
 
 nerdctl rm `nerdctl ps -a | grep Exited | awk '{print $1}'`
+
+git clone -b r22.11 https://github.com/triton-inference-server/python_backend.git
+
+git clone https://github.com/zzk0/triton.git zzk0-triton
 
 """
 tensorflow要求的numpy版本高，openvino的版本低，有冲突
