@@ -1,0 +1,54 @@
+name: "ctc_decode_stateful_python"
+backend: "python"
+max_batch_size: 4
+sequence_batching{
+  max_sequence_idle_microseconds: 5000000
+  direct {
+    minimum_slot_utilization: 0.1
+    max_queue_delay_microseconds: 1000000
+  }
+  control_input [
+      {
+          name: "START"
+          control [
+              {
+                  kind: CONTROL_SEQUENCE_START
+                  fp32_false_true: [0, 1]
+              }
+          ]
+      },
+      {
+          name: "READY"
+          control [
+              {
+                  kind: CONTROL_SEQUENCE_READY
+                  fp32_false_true: [0, 1]
+              }
+          ]
+      },
+      {
+          name: "CORRID"
+          control [
+              {
+                  kind: CONTROL_SEQUENCE_CORRID
+                  data_type: TYPE_UINT64
+              }
+          ]
+      }
+  ]
+}
+input [
+  {
+    name: "INPUT0"
+    data_type: TYPE_STRING
+    dims: [1]
+  }
+]
+output [
+  {
+    name: "OUTPUT0"
+    data_type: TYPE_STRING
+    dims: [1]
+  }
+]
+instance_group [{ kind: KIND_CPU }]

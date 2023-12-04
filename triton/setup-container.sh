@@ -45,7 +45,7 @@ nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | gr
 nerdctl cp /data0/backend/examples/backends/minimal/libtriton_minimal.so `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'`:/opt/tritonserver/backends/minimal
 nerdctl exec `nerdctl ps -a | grep tritonserver:${triton_version}-py3-tchtf | awk '{print $1}'` ls /opt/tritonserver/backends/minimal
 nerdctl commit `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep "8000->8000" | awk '{print $1}'` tritonserver:${triton_version}-py3-tchtf
-nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode poll
 
 #--strict-model-config=false
 #--model-control-mode poll
@@ -89,7 +89,7 @@ nerdctl start `nerdctl ps -a | grep "tritonserver:${triton_version}-py3" | awk '
 
 nerdctl rm `nerdctl ps -a | grep Exited | awk '{print $1}'`
 
-git clone -b r22.11 https://github.com/triton-inference-server/python_backend.git
+git clone -b r22.11 https://github.com/triton-inference-server/python_backend.git python_backend-r22.11
 
 git clone https://github.com/zzk0/triton.git zzk0-triton
 
