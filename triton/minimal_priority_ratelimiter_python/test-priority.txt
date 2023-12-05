@@ -1,0 +1,316 @@
+instance_group [
+    {
+        kind: KIND_CPU
+    }
+]
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+#  priority_queue_policy: [
+#    {
+#      key: 1
+#      value: {
+#        timeout_action: 0
+#        max_queue_size: 0
+#        default_timeout_microseconds: 0
+#        allow_timeout_override: true
+#    }},
+#    {
+#      key: 2
+#      value: {
+#        timeout_action: 1
+#        max_queue_size: 0
+#        default_timeout_microseconds: 1000
+#        allow_timeout_override: true
+#    }}
+#  ]
+}
+
+python client.py
+
+        client.async_infer(
+                    model_name,
+                    inputs,
+                    partial(completion_callback, user_data),
+                    request_id=str(i),
+                    model_version=str(1),
+                    #timeout=1000,
+                    #client_timeout=
+                    outputs=outputs,
+                    priority=priority)
+1,without priority
+Request id 1 with priority 2 has been executed
+Request id 2 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+Request id 3 with priority 2 has been executed
+Request id 4 with priority 1 has been executed
+Request id 5 with priority 2 has been executed
+Request id 6 with priority 1 has been executed
+Request id 7 with priority 2 has been executed
+Request id 8 with priority 1 has been executed
+Request id 9 with priority 2 has been executed
+
+2,with priority but no specific level key/value details
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+}
+Request id 4 with priority 1 has been executed
+Request id 2 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 3 with priority 2 has been executed
+Request id 1 with priority 2 has been executed
+Request id 5 with priority 2 has been executed
+Request id 7 with priority 2 has been executed
+Request id 9 with priority 2 has been executed
+
+3, with priority and specific level key/value details, to requeue after timeout for level 2
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+  priority_queue_policy: [
+    {
+      key: 1
+      value: {
+        timeout_action: 0
+        max_queue_size: 0
+        default_timeout_microseconds: 0
+        allow_timeout_override: true
+    }},
+    {
+      key: 2
+      value: {
+        timeout_action: 1
+        max_queue_size: 0
+        default_timeout_microseconds: 1000
+        allow_timeout_override: true
+    }}
+  ]
+}
+Request id 0 with priority 1 has been executed
+Request id 2 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+Request id 5 with priority 2 has been executed
+Request id 7 with priority 2 has been executed
+Request id 9 with priority 2 has been executed
+
+4, with priority and specific level key/value details, to requeue after timeout for level 2, queue size is 2
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+  priority_queue_policy: [
+    {
+      key: 1
+      value: {
+        timeout_action: 0
+        max_queue_size: 0
+        default_timeout_microseconds: 0
+        allow_timeout_override: true
+    }},
+    {
+      key: 2
+      value: {
+        timeout_action: 1
+        max_queue_size: 2
+        default_timeout_microseconds: 1000
+        allow_timeout_override: true
+    }}
+  ]
+}
+inference failed: [StatusCode.UNAVAILABLE] [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 9] Exceeds maximum queue size
+Request id 0 with priority 1 has been executed
+Request id 2 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+
+5, with priority and specific level key/value details, to reject after timeout for level 2, queue size is 2
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+  priority_queue_policy: [
+    {
+      key: 1
+      value: {
+        timeout_action: 0
+        max_queue_size: 0
+        default_timeout_microseconds: 0
+        allow_timeout_override: true
+    }},
+    {
+      key: 2
+      value: {
+        timeout_action: 0
+        max_queue_size: 2
+        default_timeout_microseconds: 1000
+        allow_timeout_override: true
+    }}
+  ]
+}
+inference failed: [StatusCode.UNAVAILABLE] [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 9] Exceeds maximum queue size
+Request id 2 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+
+6, with priority and specific level key/value details, to requeue after timeout for level 1/2, queue 2 size is 2, queue 1 timeout is set huge
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+  priority_queue_policy: [
+    {
+      key: 1
+      value: {
+        timeout_action: 0
+        max_queue_size: 0
+        default_timeout_microseconds: 500000
+        allow_timeout_override: true
+    }},
+    {
+      key: 2
+      value: {
+        timeout_action: 1
+        max_queue_size: 2
+        default_timeout_microseconds: 1000
+        allow_timeout_override: false
+    }}
+  ]
+}
+inference failed: [StatusCode.UNAVAILABLE] [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 9] Exceeds maximum queue size
+Request id 2 with priority 1 has been executed
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+Request id 0 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+
+        client.async_infer(
+                    model_name,
+                    inputs,
+                    partial(completion_callback, user_data),
+                    request_id=str(i),
+                    model_version=str(1),
+                    timeout=1000,
+                    #client_timeout=
+                    outputs=outputs,
+                    priority=priority)
+7, with priority and specific level key/value details, to requeue after timeout for level 1/2, queue 2 size is 2, queue 1 timeout is set huge, set timeout in client side
+dynamic_batching {
+  priority_levels: 2
+  default_priority_level: 2
+  priority_queue_policy: [
+    {
+      key: 1
+      value: {
+        timeout_action: 0
+        max_queue_size: 0
+        default_timeout_microseconds: 500000
+        allow_timeout_override: true
+    }},
+    {
+      key: 2
+      value: {
+        timeout_action: 1
+        max_queue_size: 2
+        default_timeout_microseconds: 1000
+        allow_timeout_override: false
+    }}
+  ]
+}
+inference failed: [StatusCode.UNAVAILABLE] [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] [request id: 9] Exceeds maximum queue size
+Request id 2 with priority 1 has been executed
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] Request timeout expired
+Request id 0 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+
+8, test 1-7 with ensemble model
+model_name = "minimal_priority_python_ensemble"
+7:
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 9] Exceeds maximum queue size
+Request id 0 with priority 1 has been executed
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+Request id 2 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+Request id 5 with priority 2 has been executed
+6:
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 7] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 9] Exceeds maximum queue size
+Request id 2 with priority 1 has been executed
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+Request id 0 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 3 with priority 2 has been executed
+Request id 1 with priority 2 has been executed
+5:
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 5] Exceeds maximum queue size
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 9] Exceeds maximum queue size
+Request id 0 with priority 1 has been executed
+Request id 2 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', Request timeout expired
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+4:
+inference failed: [StatusCode.UNAVAILABLE] in ensemble 'minimal_priority_python_ensemble', [request id: 9] Exceeds maximum queue size
+Request id 2 with priority 1 has been executed
+Request id 1 with priority 2 has been executed
+Request id 3 with priority 2 has been executed
+Request id 4 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 5 with priority 2 has been executed
+Request id 7 with priority 2 has been executed
+3:
+Request id 1 with priority 2 has been executed
+Request id 2 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 3 with priority 2 has been executed
+Request id 5 with priority 2 has been executed
+Request id 7 with priority 2 has been executed
+Request id 9 with priority 2 has been executed
+2:
+Request id 2 with priority 1 has been executed
+Request id 0 with priority 1 has been executed
+Request id 4 with priority 1 has been executed
+Request id 6 with priority 1 has been executed
+Request id 8 with priority 1 has been executed
+Request id 3 with priority 2 has been executed
+Request id 1 with priority 2 has been executed
+Request id 5 with priority 2 has been executed
+Request id 7 with priority 2 has been executed
+Request id 9 with priority 2 has been executed

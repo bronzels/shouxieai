@@ -1,0 +1,115 @@
+python client.py
+
+1, no limitation in tritonserver start command, rate limiter is not working
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode poll --repository-poll-secs=2
+name: "minimal_priority_ratelimiter_python"
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [0]
+        rate_limiter{
+          resources[
+          {
+            name: "R1"
+            count: 4
+          }
+          ]
+          priority: 1
+        }
+    }
+]
+name: "minimal_priority_ratelimiter_yat_python"
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [0]
+        rate_limiter{
+          resources[
+          {
+            name: "R1"
+            count: 4
+          }
+          ]
+          priority: 2
+        }
+    }
+]
+processed count 1 request id minimal_priority_ratelimiter_python_1 has been executed
+processed count 2 request id minimal_priority_ratelimiter_yat_python_1 has been executed
+processed count 3 request id minimal_priority_ratelimiter_yat_python_0 has been executed
+processed count 4 request id minimal_priority_ratelimiter_python_0 has been executed
+processed count 5 request id minimal_priority_ratelimiter_python_2 has been executed
+processed count 6 request id minimal_priority_ratelimiter_yat_python_2 has been executed
+processed count 7 request id minimal_priority_ratelimiter_python_3 has been executed
+processed count 8 request id minimal_priority_ratelimiter_yat_python_3 has been executed
+processed count 9 request id minimal_priority_ratelimiter_yat_python_4 has been executed
+processed count 10 request id minimal_priority_ratelimiter_python_4 has been executed
+processed count 11 request id minimal_priority_ratelimiter_yat_python_5 has been executed
+processed count 12 request id minimal_priority_ratelimiter_python_5 has been executed
+processed count 13 request id minimal_priority_ratelimiter_yat_python_6 has been executed
+processed count 14 request id minimal_priority_ratelimiter_python_6 has been executed
+processed count 15 request id minimal_priority_ratelimiter_yat_python_7 has been executed
+processed count 16 request id minimal_priority_ratelimiter_python_7 has been executed
+processed count 17 request id minimal_priority_ratelimiter_yat_python_8 has been executed
+processed count 18 request id minimal_priority_ratelimiter_python_8 has been executed
+processed count 19 request id minimal_priority_ratelimiter_yat_python_9 has been executed
+processed count 20 request id minimal_priority_ratelimiter_python_9 has been executed
+
+2, limitation added in tritonserver start command, rate limiter is working for instances of 2 model with different priority
+nerdctl run --gpus all --shm-size=1g --rm -p8000:8000 -p8001:8001 -p8002:8002 --net=host --rm -v ${PWD}:/models tritonserver:${triton_version}-py3-tchtf tritonserver --model-repository=/models --model-control-mode poll --repository-poll-secs=2 --rate-limit=execution_count
+name: "minimal_priority_ratelimiter_python"
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [0]
+        rate_limiter{
+          resources[
+          {
+            name: "R1"
+            count: 4
+          }
+          ]
+          priority: 1
+        }
+    }
+]
+name: "minimal_priority_ratelimiter_yat_python"
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [0]
+        rate_limiter{
+          resources[
+          {
+            name: "R1"
+            count: 4
+          }
+          ]
+          priority: 2
+        }
+    }
+]
+processed count 1 request id minimal_priority_ratelimiter_yat_python_1 has been executed
+processed count 2 request id minimal_priority_ratelimiter_python_1 has been executed
+processed count 3 request id minimal_priority_ratelimiter_python_0 has been executed
+processed count 4 request id minimal_priority_ratelimiter_python_2 has been executed
+processed count 5 request id minimal_priority_ratelimiter_python_3 has been executed
+processed count 6 request id minimal_priority_ratelimiter_yat_python_0 has been executed
+processed count 7 request id minimal_priority_ratelimiter_python_4 has been executed
+processed count 8 request id minimal_priority_ratelimiter_python_5 has been executed
+processed count 9 request id minimal_priority_ratelimiter_yat_python_2 has been executed
+processed count 10 request id minimal_priority_ratelimiter_python_6 has been executed
+processed count 11 request id minimal_priority_ratelimiter_python_7 has been executed
+processed count 12 request id minimal_priority_ratelimiter_yat_python_3 has been executed
+processed count 13 request id minimal_priority_ratelimiter_python_8 has been executed
+processed count 14 request id minimal_priority_ratelimiter_python_9 has been executed
+processed count 15 request id minimal_priority_ratelimiter_yat_python_4 has been executed
+processed count 16 request id minimal_priority_ratelimiter_yat_python_5 has been executed
+processed count 17 request id minimal_priority_ratelimiter_yat_python_6 has been executed
+processed count 18 request id minimal_priority_ratelimiter_yat_python_7 has been executed
+processed count 19 request id minimal_priority_ratelimiter_yat_python_8 has been executed
+processed count 20 request id minimal_priority_ratelimiter_yat_python_9 has been executed
