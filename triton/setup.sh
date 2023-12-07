@@ -1,4 +1,7 @@
+#retry "" 20 1
+
 version=r22.11
+image_version=22.11
 prjs=(server backend client)
 echo "version:${version}"
 for prj in ${prjs[*]}
@@ -187,7 +190,7 @@ cd server-${triton_version}
 #cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton ..
 #cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/install -DRapidJSON_DIR=/data0/rapidjson ..
 #make install
-retry "./build.py -v --no-container-build --build-dir=/data0/triton --enable-all" 20 1
+./build.py -v --no-container-build --build-dir=/data0/triton --enable-all
 #
 
 git clone --recursive https://github.com/triton-inference-server/backends.git
@@ -207,7 +210,7 @@ git clone --recursive https://github.com/triton-inference-server/client.git
 cd client
 mkdir build
 cd build
-file=/data0/client/src/c++/perf_analyzer/client_backend/torchserve/../../client_backend/client_backend.h
+file=../src/c++/perf_analyzer/client_backend/torchserve/../../client_backend/client_backend.h
 cp ${file} ${file}.bk
 sed -i "/#include <vector>/a\#include <unordered_map>" ${file}
 #sourceforge/github上下载的libb64都是需要手工copy的include/b64和libb64.a，编译时会提示BUFFERSIZE常量未定义错误
@@ -217,14 +220,48 @@ wget -c http://www6.atomicorp.com/channels/atomic/centos/7/x86_64/RPMS/libb64-1.
 rpm -Uvh libb64-1.2.1-2.1.el7.art.x86_64.rpm
 wget -c http://www6.atomicorp.com/channels/atomic/centos/7/x86_64/RPMS/libb64-devel-1.2.1-2.1.el7.art.x86_64.rpm
 rpm -Uvh libb64-devel-1.2.1-2.1.el7.art.x86_64.rpm
-file=/data0/client/src/c++/CMakeLists.txt
+wget -c https://github.com/grpc/grpc/archive/refs/tags/v1.60.0.tar.gz
+tar xzvf grpc-1.60.0.tar.gz
+cd grpc-1.60.0
+mkdir build
+cd build
+cmake ..
+file=../src/c++/CMakeLists.txt
 cp ${file} ${file}.bk
 sed -i '/project(cc-clients LANGUAGES C CXX)/a\set(CMAKE_CXX_STANDARD 17)' ${file}
 pip install grpcio
 pip install grpcio-tools
 echo "export PATH=\$PATH:/data0/maven/bin" >> ~/.bashrc
-make cc-clients python-clients java-clients
-#
+cd src/python/libray
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton
+make install
+pip install /data0/triton/python/tritonclient-0.0.0-py3-none-manylinux1_x86_64.whl
+#fq
+#！！！注释掉/etc/hosts内github
+#,
+#    "http://hub-mirror.c.163.com"
+docker stop centos7-netutil-ccplus7-go-jdk
+docker rm centos7-netutil-ccplus7-go-jdk
+#苹果共享id：f54@falemon.com/cM9WZ1d0uQ
+#--privileged --net host
+docker run --net host -itd --name centos7-netutil-ccplus7-go-jdk --restart unless-stopped -v /Volumes/data/workspace/shouxieai/dockerhost:/host harbor.my.org:1080/base/python:3.8-centos7-netutil-ccplus7-go-jdk tail -f /dev/null
+docker exec -it centos7-netutil-ccplus7-go-jdk bash
+  git clone https://github.com/grpc/grpc.git
+  #比较host/container下载速度，应该都能到M以上
+  scl enable devtoolset-10 bash
+  cp /host/retry /usr/bin
+  cd /host/client-r22.11
+  mkdir build
+  cd build
+  #cmake -DCMAKE_INSTALL_PREFIX:PATH=/../client-built -DTRITON_ENABLE_GPU=on -DTRITON_ENABLE_CC_HTTP=on -DTRITON_ENABLE_CC_GRPC=on -DTRITON_ENABLE_PERF_ANALYZER=on -DTRITON_ENABLE_PYTHON_GRPC=on ..
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/host/client-built -DTRITON_ENABLE_GPU=on -DTRITON_ENABLE_CC_HTTP=on -DTRITON_ENABLE_CC_GRPC=on -DTRITON_ENABLE_PERF_ANALYZER=on -DTRITON_ENABLE_PYTHON_GRPC=on ..
+  retry "make cc-clients python-clients java-clients" 10 1
+  cd /host/client-r22.11/build && watch du -h --max-depth=1
+  #./_deps大概在2-4s增加1M，说明在正常下载依赖github源码
+  #host也无法clone grpc以后，换一个站点重连，换了多个还不行就把客户端退出重新再进入
+#总是停在Cloning into "grpc"，grpc下载编译依赖太多报错
 
 yum install libarchive-devel -y
 onnxruntime_version=1.16.1
@@ -243,9 +280,9 @@ do
   cd build
   if [[ "${be}" == "python" ]]; then
     cmake -DTRITON_ENABLE_GPU=ON \
-    -DTRITON_BACKEND_REPO_TAG=r23.10 \
-    -DTRITON_COMMON_REPO_TAG=r23.10 \
-    -DTRITON_CORE_REPO_TAG=r23.10 \
+    -DTRITON_BACKEND_REPO_TAG=r22.11 \
+    -DTRITON_COMMON_REPO_TAG=r22.11 \
+    -DTRITON_CORE_REPO_TAG=r22.11 \
     -DCMAKE_INSTALL_PREFIX:PATH=/data/triton \
      ..
   fi
@@ -260,7 +297,36 @@ do
     #cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/install -DTRITON_PYTORCH_INCLUDE_PATHS="<PATH_PREFIX>/torch;<PATH_PREFIX>/torch/torch/csrc/api/include;<PATH_PREFIX>/torchvision" -DTRITON_PYTORCH_LIB_PATHS="<LIB_PATH_PREFIX>" ..
     #cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DTRITON_PYTORCH_INCLUDE_PATHS="/data0/envs/deepspeed/lib/python3.9/site-packages/torch;/data0/envs/deepspeed/lib/python3.9/site-packages/torch/include/torch/csrc/api/include;/data0/envs/deepspeed/lib/python3.9/site-packages/torchvision" -DTRITON_PYTORCH_LIB_PATHS="/data0/envs/deepspeed/lib/python3.9/site-packages/torch/lib;/data0/envs/deepspeed/lib/python3.9/site-packages/torchvision.libs" ..
     #总是提示找不到torchvision，enable TRT以后又提示找不到trt
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DTRITON_PYTORCH_DOCKER_IMAGE="nvcr.io/nvidia/pytorch:23.10-py3" ..
+    #cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DTRITON_PYTORCH_DOCKER_IMAGE="nvcr.io/nvidia/pytorch:23.10-py3" ..
+    #nerdctl pull nvcr.io/nvidia/pytorch:${image_version}-py3
+    #retry "cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DTRITON_PYTORCH_DOCKER_IMAGE=\"nvcr.io/nvidia/pytorch:${image_version}-py3\" .." 20 1
+    #有libc10版本匹配问题，因为container是用ubuntu做的，没法用container方式编译
+    conda create -n triton python=3.8 -y
+    #conda remove -n triton --all -y
+    conda activate triton
+    pip install torch-1.13.0+cu117.with.pypi.cudnn-cp38-cp38-linux_x86_64.whl
+    pip install torch-1.13.0+cpu-cp38-cp38-linux_x86_64.whl
+
+    wget -c https://download.pytorch.org/libtorch/cu117/libtorch-shared-with-deps-1.13.0%2Bcu117.zip
+    unzip libtorch-shared-with-deps-1.13.0+cu117.zip
+
+    wget -c https://github.com/pytorch/vision/archive/refs/tags/v0.14.0.tar.gz
+    tar xzvf vision-0.14.0.tar.gz
+    cd vision-0.14.0
+    mkdir build
+    cd build
+    export Torch_DIR=/data0/envs/triton/lib/python3.8/site-packages/torch/share/cmake
+    retry "cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DUSE_PYTHON=on -DWITH_CUDA=on .." 10 1
+    cp /data0/triton/lib64/libtorchvision.so /data0/envs/triton/lib/python3.8/site-packages/torch/lib/
+
+    #pip install torchvision-0.14.0+cu117-cp38-cp38-linux_x86_64.whl
+    retry "cmake -DCMAKE_INSTALL_PREFIX:PATH=/data0/triton -DTRITON_PYTORCH_INCLUDE_PATHS=/data0/envs/triton/lib/python3.8/site-packages/torch/include;/data0/libtorch/include -DTRITON_PYTORCH_LIB_PATHS=/data0/envs/triton/lib/python3.8/site-packages/torch/lib .." 10 1
+:<<EOF
+#报错缺少文件，下载libtorch也没有fuser目录
+/data0/triton-src/pytorch_backend-r22.11/src/libtorch_utils.h:37:10: fatal error: torch/csrc/jit/codegen/fuser/interface.h: No such file or directory
+   37 | #include <torch/csrc/jit/codegen/fuser/interface.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+EOF
   fi
   #done
 

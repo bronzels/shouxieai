@@ -63,6 +63,47 @@ for model_size in ["small_model", "large_model"]:
         except AssertionError as arg:
             print('%s, %s' % (arg.__class__.__name__, arg))
         print("\n\n\n")
+
+import numpy as np
+import cuml
+import sys
+
+GPU_COUNT = 8
+
+if len(sys.argv) >= 2:
+    max_batch_size = sys.argv[0]
+else:
+    max_batch_size = 8
+
+def create_batches(arr):
+    chunks = (
+        arr.shape[0] // max_batch_size +
+        int(bool(arr.shape[0] % max_batch_size) or arr.shape[0] < max_batch_size)
+    )
+    return np.array_split(arr, max(GPU_COUNT, chunks))
+
+large_model_results = np.concatenate([triton_predict('large_model', chunk) for chunk in create_batches(np_data)])
+
+small_model_results = np.concatenate([triton_predict('small_model-cpu', chunk) for chunk in create_batches(np_data)])
+from common import large_model_file_name
+with open(large_model_file_name, 'rb') as large_model_file:
+    large_model = pickle.load(large_model_file)
+large_model.predict_proba(X_test)
+
+from common import y_test_file_name
+with open(y_test_file_name, 'rb') as y_test_file:
+    y_test = pickle.load(y_test_file)
+large_precision, large_recall, _ = cuml.metrics.precision_recall_curve(y_test, large_model_results[:, 1])
+small_precision, small_recall, _ = cuml.metrics.precision_recall_curve(y_test, small_model_results[:, 1])
+
+import matplotlib.pyplot as plt
+plt.plot(small_precision, small_recall, colr='#0071c5')
+plt.plot(large_precision, large_recall, colr='#76b900')
+plt.title('Precision vs Recall for Small and Large Models')
+plt.xlabel('Precision')
+plt.ylabel('Recall')
+plt.show()
+plt.savefig('pr.png')
 """
 curl -X POST http://localhost:8000/v2/repository/models/fraud_detection_fil/small_model/load
 curl -X POST http://localhost:8000/v2/repository/models/fraud_detection_fil/small_model-cpu/load
@@ -187,4 +228,19 @@ Max relative difference: 67109.51
        [9.999998e-01, 1.807021e-07],
        [9.999912e-01, 8.777597e-06],...
 
+
+perf_analyzer -m large_model-cpu
+Concurrency: 1, throughput: 1256.83 infer/sec, latency 794 usec
+
+perf_analyzer -m large_model
+Concurrency: 1, throughput: 1839.03 infer/sec, latency 543 usec
+
+perf_analyzer -m large_model-cpu -b 6 --concurrency-range 6:6
+Concurrency: 6, throughput: 5716.14 infer/sec, latency 6297 usec
+
+perf_analyzer -m large_model -b 6 --concurrency-range 6:6
+Concurrency: 6, throughput: 96823.8 infer/sec, latency 371 usec
+
+perf_analyzer -m large_model -b 80 --concurrency-range 8:8
+Concurrency: 8, throughput: 777002 infer/sec, latency 823 usec
 """

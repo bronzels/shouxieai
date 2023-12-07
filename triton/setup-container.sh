@@ -29,11 +29,14 @@ mkdir ../client-v2.27.0
 cd ../client-v2.27.0
 tar xzvf ../v2.27.0_ubuntu2004.clients.tar.gz
 cd -
+
+
+
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3 | grep "8000->8000" | awk '{print $1}'` /bin/bash
   cd /models
   pip install torch-1.12.0+cu116-cp38-cp38-linux_x86_64.whl
   pip install torchvision-0.13.0+cu116-cp38-cp38-linux_x86_64.whl
-  pip install tritonclient[all]
+  #pip install tritonclient[all]
   cd /client/python
   pip3 install --upgrade tritonclient-2.27.0-py3-none-manylinux1_x86_64.whl[all]
   pip install onnxruntime==1.13.1
@@ -79,7 +82,7 @@ nerdctl rm `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{
 nerdctl exec -it `nerdctl ps -a | grep tritonserver:${triton_version}-py3-sdk | awk '{print $1}'` /bin/bash
 
 #nerdctl run -it --net=host --rm -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
-nerdctl run --runtime=nvidia-container-runtime -it --net=host --rm -v /usr/local/cuda:/usr/local/cuda -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
+nerdctl run --runtime=nvidia-container-runtime -it --net=host --rm -v /root/cmake-3.26.5-linux-x86_64:/cmake -v /data0/shouxieai/triton-cplus-client:/triton-cplus-client -v /data0/tritonclient:/tritonclient -v /usr/local/cuda:/usr/local/cuda -v `realpath $PWD/../data`:/data -v ${PWD}:/models tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
   cd /models
 
 nerdctl stop `nerdctl ps -a | grep "tritonserver:${triton_version}-py3-tchtf" | awk '{print $1}'`
@@ -90,6 +93,7 @@ nerdctl start `nerdctl ps -a | grep "tritonserver:${triton_version}-py3" | awk '
 
 nerdctl start `nerdctl ps -a| grep -v "CONTAINER ID" | grep -v "Up" | awk '{print $1}'`
 nerdctl rm `nerdctl ps -a | grep -v "CONTAINER ID" | grep Exited | awk '{print $1}'`
+nerdctl rm `nerdctl ps -a | grep -v "CONTAINER ID" | grep -v "Up" | awk '{print $1}'`
 
 git clone -b r22.11 https://github.com/triton-inference-server/python_backend.git python_backend-r22.11
 
