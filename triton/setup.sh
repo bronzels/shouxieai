@@ -67,10 +67,10 @@ xz -d cudnn-linux-x86_64-8.9.6.50_cuda12-archive.tar.xz
 tar -xvf cudnn-linux-x86_64-8.9.6.50_cuda12-archive.tar
 ln -s cudnn-linux-x86_64-8.9.6.50_cuda12-archive cuda
 EOF
-wget -c https://developer.nvidia.com/compute/cudnn/secure/8.6.0/local_installers/11.8/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
-xz -d cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
-tar -xvf cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar
-ln -s cudnn-linux-x86_64-8.6.0.163_cuda11-archive cuda
+xz -d cudnn-linux-x86_64-8.7.0.84_cuda11-archive.tar.xz
+tar -xvf cudnn-linux-x86_64-8.7.0.84_cuda11-archive.tar
+rm -f cuda
+ln -s cudnn-linux-x86_64-8.7.0.84_cuda11-archive cuda
 mv cuda/lib cuda/lib64
 #cp -r /usr/local/cuda/include /usr/local/cuda/include.bk4-cudnn-setup
 \cp cuda/include/cudnn*.h /usr/local/cuda/include
