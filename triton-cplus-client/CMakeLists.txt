@@ -18,29 +18,29 @@ include_directories($<TARGET_PROPERTY:gRPC::grpc,INTERFACE_INCLUDE_DIRECTORIES>)
 
 include_directories(/tritonclient/include)
 link_directories(/tritonclient/lib)
-#link_libraries(httpclient_static)
-#find_package(OpenCV REQUIRED)
-#
-#add_executable(
-#  image_client
-#  image_client.cc
-#  $<TARGET_OBJECTS:json-utils-library>
-#)
-#target_include_directories(
-#  image_client
-#  PRIVATE ${OpenCV_INCLUDE_DIRS}
-#)
-#target_link_libraries(
-#  image_client
-#  PRIVATE
-#    grpcclient_static
-#    httpclient_static
-#    ${OpenCV_LIBS}
-#)
-#install(
-#  TARGETS image_client
-#  RUNTIME DESTINATION bin
-#)
+link_libraries(httpclient_static)
+find_package(OpenCV REQUIRED)
+
+add_executable(
+  image_client
+  image_client.cc
+  $<TARGET_OBJECTS:json-utils-library>
+)
+target_include_directories(
+  image_client
+  PRIVATE ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(
+  image_client
+  PRIVATE
+    grpcclient_static
+    httpclient_static
+    ${OpenCV_LIBS}
+)
+install(
+  TARGETS image_client
+  RUNTIME DESTINATION bin
+)
 
 add_executable(simple_http_infer_client simple_http_infer_client.cc)
 
