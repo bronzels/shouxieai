@@ -1,5 +1,6 @@
 name: "simple_python"
 backend: "python"
+max_batch_size : 32
 input [
   {
     name: "INPUT0"

@@ -159,7 +159,7 @@ main(int argc, char** argv)
     }
   }
 
-  std::string model_name = "simple";
+  std::string model_name = "simple_python";
   std::string model_version = "";
 
   tc::HttpSslOptions ssl_options;
@@ -291,3 +291,48 @@ main(int argc, char** argv)
 
   return 0;
 }
+/*
+./simple_http_infer_client
+0 + 0 = 1
+0 - 0 = -1
+1 + 1 = 2
+1 - 1 = 0
+2 + 2 = 3
+2 - 2 = 1
+3 + 3 = 4
+3 - 3 = 2
+4 + 4 = 5
+4 - 4 = 3
+5 + 5 = 6
+5 - 5 = 4
+6 + 6 = 7
+6 - 6 = 5
+7 + 7 = 8
+7 - 7 = 6
+8 + 8 = 9
+8 - 8 = 7
+9 + 9 = 10
+9 - 9 = 8
+10 + 10 = 11
+10 - 10 = 9
+11 + 11 = 12
+11 - 11 = 10
+12 + 12 = 13
+12 - 12 = 11
+13 + 13 = 14
+13 - 13 = 12
+14 + 14 = 15
+14 - 14 = 13
+15 + 15 = 16
+15 - 15 = 14
+{"model_name":"simple_python","model_version":"1","outputs":[{"name":"OUTPUT0","datatype":"INT32","shape":[1,16],"parameters":{"binary_data_size":64}},{"name":"OUTPUT1","datatype":"INT32","shape":[1,16],"parameters":{"binary_data_size":64}}]}
+======Client Statistics======
+completed_request_count 1
+cumulative_total_request_time_ns 26969277
+cumulative_send_time_ns 1490889
+cumulative_receive_time_ns 224
+======Model Statistics======
+{"model_stats":[{"name":"simple_python","version":"1","last_inference":1702021401555,"inference_count":1,"execution_count":1,"inference_stats":{"success":{"count":1,"ns":24938244},"fail":{"count":0,"ns":0},"queue":{"count":1,"ns":135433},"compute_input":{"count":1,"ns":326982},"compute_infer":{"count":1,"ns":24390579},"compute_output":{"count":1,"ns":54066},"cache_hit":{"count":0,"ns":0},"cache_miss":{"count":0,"ns":0}},"batch_stats":[{"batch_size":1,"compute_input":{"count":1,"ns":326982},"compute_infer":{"count":1,"ns":24390579},"compute_output":{"count":1,"ns":54066}}]}]}
+PASS : Infer
+
+*/

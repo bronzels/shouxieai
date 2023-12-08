@@ -1,3 +1,6 @@
+#apt install -y rapidjson-dev
+#apt-get install libcurl4-openssl-dev
+
 #cmake_minimum_required (VERSION 3.18)
 cmake_minimum_required (VERSION 3.16)
 project(triton-cplus-client)
@@ -10,7 +13,6 @@ set(CMAKE_CXX_STANDARD 14)
 #link_directories(/data0/tritonclient/lib)
 include_directories(/tritonclient/include library)
 link_directories(/tritonclient/lib)
-
 
 set(tritonclient_LIBRARIES
 absl_bad_any_cast_impl
@@ -116,7 +118,6 @@ find_package(OpenCV REQUIRED)
 add_executable(
   image_client
   image_client.cc
-  library/common.cc
   library/json_utils.cc
 )
 target_include_directories(
@@ -136,15 +137,11 @@ target_link_libraries(
     ssl
     z
 )
-install(
-  TARGETS image_client
-  RUNTIME DESTINATION bin
-)
+
 
 add_executable(
   simple_http_infer_client
   simple_http_infer_client.cc
-  library/common.cc
   library/json_utils.cc
 )
 
@@ -160,7 +157,4 @@ target_link_libraries(
     ssl
     z
 )
-install(
-  TARGETS simple_http_infer_client
-  RUNTIME DESTINATION bin
-)
+

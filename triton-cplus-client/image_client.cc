@@ -205,6 +205,7 @@ Postprocess(
     exit(1);
   }
   size_t index = 0;
+  //std::cout << "batch_size: '" << batch_size << std::endl;
   for (size_t b = 0; b < batch_size; ++b) {
     std::cout << "Image '" << filenames[b] << "':" << std::endl;
     for (size_t c = 0; c < topk; ++c) {
@@ -680,6 +681,11 @@ union TritonClient {
 
 }
 
+#include <stdio.h>
+
+//定义打印宏，打印文件名、行号、函数名
+#define _DEBUG_PRINT printf("---debug---%s(%d)-%s\n", __FILE__, __LINE__, __FUNCTION__);//注：两个短下划线__
+
 int
 main(int argc, char** argv)
 {
@@ -838,12 +844,16 @@ main(int argc, char** argv)
     exit(1);
   }
 
+  //std::cout << "name_stat.st_mode: " << name_stat.st_mode << std::endl;
+  //std::cout << "S_IFDIR: '" << S_IFDIR << std::endl;
   if (name_stat.st_mode & S_IFDIR) {
     const std::string dirname = argv[optind];
+    //std::cout << "dirname: " << dirname << std::endl;
     DIR* dir_ptr = opendir(dirname.c_str());
     struct dirent* d_ptr;
     while ((d_ptr = readdir(dir_ptr)) != NULL) {
       const std::string filename = d_ptr->d_name;
+      //std::cout << "filename: " << filename << std::endl;
       if ((filename != ".") && (filename != "..")) {
         image_filenames.push_back(dirname + "/" + filename);
       }
@@ -852,6 +862,7 @@ main(int argc, char** argv)
   } else {
     image_filenames.push_back(argv[optind]);
   }
+  //std::cout << "image_filenames.size(): " << image_filenames.size() << std::endl;
 
   std::sort(image_filenames.begin(), image_filenames.end());
 
@@ -975,6 +986,7 @@ main(int argc, char** argv)
                   << std::endl;
         exit(1);
       }
+      results.emplace_back(result);
     } else {
       if (streaming) {
         err = triton_client.grpc_client_->AsyncStreamInfer(
@@ -1010,6 +1022,7 @@ main(int argc, char** argv)
     }
   }
 
+  //std::cout << "results.size(): '" << results.size() << std::endl;
   for (size_t idx = 0; idx < results.size(); idx++) {
     std::cout << "Request " << idx << ", batch size " << batch_size
               << std::endl;
@@ -1020,3 +1033,20 @@ main(int argc, char** argv)
 
   return 0;
 }
+
+/*
+/tritonclient/bin/image_client -m resnet50_pythononnx -c 1000 -b 1 /data/pics
+
+./image_client -m resnet50_pythononnx -c 1000 -b 1 /data/pics
+./image_client -m resnet50_tensorrt -c 1000 -b 1 /data/pics
+
+./image_client -m resnet50_tensorrt -c 1000 -b 1 -a /data/pics
+
+./image_client -m resnet50_tensorrt -c 1000 -b 1 -u localhost:8001 -i gRPC /data/pics
+
+./image_client -m resnet50_tensorrt -c 1000 -b 1 -a -u localhost:8001 -i gRPC /data/pics
+
+./image_client -m resnet50_tensorrt -c 1000 -b 1 --streaming -u localhost:8001 -i gRPC /data/pics
+
+
+*/
