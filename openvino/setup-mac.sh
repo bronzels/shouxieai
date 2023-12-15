@@ -4,6 +4,8 @@ echo "conda activate openvino" >> ~/.bash_profile
 pip install openvino==2023.0.0 openvino-dev==2023.0.0 openvino-dev[onnx,pytorch]==2023.0.0
 pip install opencv-python==4.5.5.64 opencv-contrib-python==4.5.5.64
 pip install protobuf==3.20.2
+pip install datasets
+pip install transformers[onnx]
 """
 #报错
     from cv2 import *

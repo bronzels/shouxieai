@@ -104,7 +104,6 @@ def main():
     log.info(header)
     log.info('-' * len(header))
 
-    sys.stdout.write("\x1b[?7l")
     for class_id in top_10:
         number_indent = len('class_id       ') - len(str(labels[class_id])) + 1
         probability_indent = ' ' * number_indent
