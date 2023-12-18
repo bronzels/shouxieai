@@ -126,7 +126,7 @@ int tmain(int argc, tchar* argv[]) {
 [ INFO ] duration: 0.07
 [ INFO ] duration preprocess(recompile every time for dynamic batch) + infer time: 0.30000000
 
-Top 10 results:
+Top 10 results:01
 
 Image car.jpeg
 

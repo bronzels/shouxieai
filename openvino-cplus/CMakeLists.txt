@@ -9,8 +9,8 @@ project(openvino-cplus)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
-#set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 20)
 
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} ARCH)
 
@@ -34,12 +34,14 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
     set (CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-find_package (gflags PATHS /usr/local/gflags REQUIRED )
+#find_package (gflags PATHS /usr/local/gflags REQUIRED )
+find_package (gflags REQUIRED )
 if(gflags_FOUND)
     message(STATUS "gflags (${gflags_VERSION}) is found at ${gflags_DIR}, include:${gflags_INCLUDE_DIR}")
 endif()
-include_directories (/usr/local/gcc-13.2.0/include/c++/13.2.0 ${gflags_INCLUDE_DIR})
-link_directories (/usr/local/gcc-13.2.0/lib64)
+#include_directories (/usr/local/gcc-13.2.0/include/c++/13.2.0 ${gflags_INCLUDE_DIR})
+include_directories (${gflags_INCLUDE_DIR})
+#link_2directories (/usr/local/gcc-13.2.0/lib64)
 
 add_subdirectory(common)
 
@@ -59,12 +61,28 @@ add_executable(
         samples_hello_classification_wthlabels
         samples_hello_classification_wthlabels.cpp
 )
-target_include_directories(
+target_link_libraries(
         samples_hello_classification_wthlabels
+        PRIVATE
+        -Wl,--start-group
+        ${openvinoclient_LIBRARIES}
+        ${openvinoclient_deps_LIBRARIES}
+        -Wl,--end-group
+        ${ov_link_libraries}
+)
+
+find_package(OpenCV REQUIRED)
+message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
+add_executable(
+        misc_classification_onnx_wthlabels
+        misc_classification_onnx_wthlabels.cpp
+)
+target_include_directories(
+        misc_classification_onnx_wthlabels
         PRIVATE ${OpenCV_INCLUDE_DIRS}
 )
 target_link_libraries(
-        samples_hello_classification_wthlabels
+        misc_classification_onnx_wthlabels
         PRIVATE
         -Wl,--start-group
         ${openvinoclient_LIBRARIES}
