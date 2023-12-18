@@ -56,7 +56,7 @@ if __name__ == '__main__':
 [ INFO ] 
 
 能读出NVIDIA GPU信息，但是执行分类会出错
-python samples_hello_classification_wthlabels.py alexnet.xml car.jpeg GPU labels-alexnet.txt
+python samples_hello_classification_wthlabels.py alexnet.xml car.jpeg GPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:alexnet.xml
 61 warnings generated.

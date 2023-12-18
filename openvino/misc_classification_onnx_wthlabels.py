@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
 
 """
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx car.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx car.jpeg CPU labels-imagenet.txt 
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet50-static.onnx
 [ INFO ] ---debug---infer time:0.09180426597595215
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx laptop.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx laptop.jpeg CPU labels-imagenet.txt 
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet50-static.onnx
 [ INFO ] ---debug---infer time:0.09436917304992676
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx dog.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-static.onnx dog.jpeg CPU labels-imagenet.txt 
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet50-static.onnx
 [ INFO ] ---debug---infer time:0.1067812442779541
@@ -159,7 +159,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg CPU labels-imagenet.txt 
 [ INFO ] ---debug---infer time:0.18404603004455566
 [ INFO ] ---debug---preprocess + infer time:0.18706202507019043
 [ INFO ] Image path: car.jpeg
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx laptop.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx laptop.jpeg CPU labels-imagenet.txt 
 [ INFO ] ---debug---infer time:0.14465093612670898
 [ INFO ] ---debug---preprocess + infer time:0.16127467155456543
 [ INFO ] Image path: laptop.jpeg
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx dog.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx dog.jpeg CPU labels-imagenet.txt 
 [ INFO ] ---debug---infer time:0.15482878684997559
 [ INFO ] ---debug---preprocess + infer time:0.17514395713806152
 [ INFO ] Image path: dog.jpeg
@@ -219,7 +219,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg,dog.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg,dog.jpeg CPU labels-imagenet.txt 
 [ INFO ] ---debug---infer time:0.5754067897796631
 [ INFO ] ---debug---preprocess + infer time:0.8114719390869141
 [ INFO ] Image path: car.jpeg
@@ -253,7 +253,7 @@ if __name__ == '__main__':
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg,laptop.jpeg,dog.jpeg CPU labels-resnet50.txt 
+/Volumes/data/envs/openvino/bin/python /Volumes/data/workspace/shouxieai/openvino/classification_onnx_wthlabels.py resnet50-dynamic.onnx car.jpeg,laptop.jpeg,dog.jpeg CPU labels-imagenet.txt 
 [ INFO ] ---debug---infer time:0.3268129825592041
 [ INFO ] ---debug---preprocess + infer time:0.3421509265899658
 [ INFO ] Image path: car.jpeg

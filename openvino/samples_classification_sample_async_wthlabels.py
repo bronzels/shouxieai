@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-with open('labels-resnet50.txt', 'r') as fp:
+with open('labels-imagenet.txt', 'r') as fp:
     labels = [line.replace('\n', '') for line in fp.readlines()]
 
 def completion_callback(infer_request: InferRequest, image_path: str) -> None:

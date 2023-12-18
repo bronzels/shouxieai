@@ -142,7 +142,7 @@ python samples_hello_classification_wthlabels.py alexnet.xml car.jpeg CPU labels
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml car.jpeg CPU labels-resnet50.txt
+python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml car.jpeg CPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet_fr_torch_onnx-static.xml
 [ INFO ] ---debug---infer time:0.09466099739074707
@@ -164,7 +164,7 @@ python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml laptop.jpeg CPU labels-resnet50.txt
+python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml laptop.jpeg CPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet_fr_torch_onnx-static.xml
 [ INFO ] ---debug---infer time:0.08134102821350098
@@ -186,7 +186,7 @@ python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml dog.jpeg CPU labels-resnet50.txt
+python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml dog.jpeg CPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet_fr_torch_onnx-static.xml
 [ INFO ] ---debug---infer time:0.0819697380065918
@@ -208,7 +208,7 @@ python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-fp16-static.xml car.jpeg CPU labels-resnet50.txt
+python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-fp16-static.xml car.jpeg CPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet_fr_torch_onnx-fp16-static.xml
 [ INFO ] ---debug---infer time:0.08330583572387695
@@ -230,7 +230,7 @@ python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-fp16-stati
 [ INFO ] 
 [ INFO ] This sample is an API example, for any performance measurements please use the dedicated benchmark_app tool
 
-python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml car.jpeg CPU labels-resnet50.txt
+python samples_hello_classification_wthlabels.py resnet_fr_torch_onnx-static.xml car.jpeg CPU labels-imagenet.txt
 [ INFO ] Creating OpenVINO Runtime Core
 [ INFO ] Reading the model:resnet_fr_torch_onnx-static.xml
 [ INFO ] ---debug---infer time:0.08616805076599121
