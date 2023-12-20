@@ -1,4 +1,14 @@
 """
+#fq on mmubu
+export http_proxy=http://mmubu:10792;export https_proxy=http://mmubu:10792;
+export HTTP_PROXY=${http_proxy};export HTTPS_PROXY=${https_proxy};
+#https://huggingface.co/settings/tokens
+#set token, copy token to clipboard
+git config --global credential.helper store
+huggingface-cli login
+#input token
+#input yes
+
 #start client to export
 nerdctl run --runtime=nvidia-container-runtime -it --net=host --rm -v /usr/local/cuda:/usr/local/cuda -v `realpath $PWD/../data`:/data -v ${PWD}:/models.. tritonserver:${triton_version}-py3-sdk-tchtf /bin/bash
 """
