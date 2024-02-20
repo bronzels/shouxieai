@@ -2,6 +2,13 @@
 #fq on mmubu
 export http_proxy=http://mmubu:10792;export https_proxy=http://mmubu:10792;
 export HTTP_PROXY=${http_proxy};export HTTPS_PROXY=${https_proxy};
+#printf -v lan '%s,' 192.168.3.{1..253}
+#printf -v outlan '%s,' 192.168.1.{1..253}
+#export no_proxy="${lan%,},${outlan%,},127.0.0.1";
+#export NO_PROXY=$no_proxy
+export no_proxy="192.168.3.14,192.168.3.6,192.168.3.9,192.168.3.2,192.168.3.1,192.168.1.1,127.0.0.1"
+export NO_PROXY=$no_proxy
+
 #https://huggingface.co/settings/tokens
 #set token, copy token to clipboard
 git config --global credential.helper store
