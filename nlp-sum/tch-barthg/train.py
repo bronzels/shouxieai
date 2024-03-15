@@ -40,12 +40,14 @@ dataset = dataset_split.pop("train")
 dataset_test = dataset_split.pop("test")
 mypickle.save_pickle_data("./", dataset_test, "dataset_test")
 
-TokenModel = "fnlp-bart-base-chinese"
+TokenModel = "fnlp-bart-small-chinese"
 
-from transformers import AutoTokenizer, BertConfig
+#from transformers import AutoTokenizer, BertConfig
+from transformers import AutoTokenizer, BartConfig
 tokenizer = AutoTokenizer.from_pretrained(TokenModel)
 
-config = BertConfig.from_pretrained(TokenModel)
+#config = BertConfig.from_pretrained(TokenModel)
+config = BartConfig.from_pretrained(TokenModel)
 
 model_checkpoint = "model"
 
@@ -85,10 +87,11 @@ model = AutoModelForSeq2SeqLM.from_pretrained(TokenModel)
 logger = logging.get_logger(__name__)
 
 #batch_size = 4
-batch_size = 1
+batch_size = 4
 args = Seq2SeqTrainingArguments(
     output_dir="results",
-    num_train_epochs=50,  # demo
+    #num_train_epochs=50,  # demo
+    num_train_epochs=5,  # demo
     do_train=True,
     do_eval=True,
     per_device_train_batch_size=batch_size,  # demo
@@ -191,6 +194,7 @@ eval_results = trainer.evaluate()
 print(eval_results)
 
 '''
-large，12g显存几乎占满，训练很慢，死机，可能是模型太大
-base，显存占5G，训练还是要50多个小时，放弃
+large，batch_size=1，12g显存几乎占满，训练很慢，死机，可能是模型太大
+base，batch_size=6，占10G，训练还是要40多个小时，放弃
+small, batch_size=4，占10G，训练还是要40多个小时，放弃
 '''
